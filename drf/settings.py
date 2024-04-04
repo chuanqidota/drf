@@ -9,24 +9,35 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import os
+import sys
 from pathlib import Path
+from MySQLdb.cursors import SSCursor
 
+from app.common.apps import CommonConfig
+from app.consumer.apps import ConsumerConfig
+from app.openapi.apps import OpenapiConfig
+from drf.config import ConfObj
+
+config = ConfObj.get_conf()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%*sezt=6*pb5+$&8%q4=v-+_l-ik@+_37^ae_-v1%_%e+nf8i)'
+SECRET_KEY = config.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config.get('DEBUG', False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config.get('ALLOWED_HOSTS', [])
 
+# 解决 Origin check 的问题
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
@@ -37,6 +48,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'common.apps.CommonConfig',
+    'consumer.apps.ConsumerConfig',
+    'openapi.apps.OpenapiConfig',
+    'user.apps.UserConfig'
 ]
 
 MIDDLEWARE = [
@@ -69,17 +84,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'drf.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('MYSQL_NAME'),
+        'HOST': config.get('MYSQL_HOST'),
+        'PORT': config.get('MYSQL_PORT'),
+        'USER': config.get('MYSQL_USER'),
+        'PASSWORD': ConfObj.decrypt(config.get('MYSQL_PASSWORD')),
+        'ATOMIC_REQUESTS': False,
+        'OPTIONS': {
+            'init_command': 'SET sql_mode=STRICT_TRANS_TABLES',
+            'charset': 'utf8mb4',
+            'cursorclass': SSCursor,
+            # 'ssl_mode': 'DISABLED'
+        }
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -99,18 +123,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-Hans'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
@@ -121,3 +143,25 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# celery配置
+_REDIS_PASSWD = config.get('REDIS_PASSWORD', '')
+REDIS_PASSWD = ConfObj.decrypt(_REDIS_PASSWD) if _REDIS_PASSWD else ''
+REDIS_HOST = config.get('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = config.get('REDIS_PORT', 6379)
+REDIS_DB = config.get('REDIS_DB', 0)
+
+CELERY_BROKER_URL = f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
+CELERY_TASK_SERIALIZER = 'pickle'
+CELERY_RESULT_SERIALIZER = 'pickle'
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_ACCEPT_CONTENT = ['json', 'pickle']
+CELERY_RESULT_EXPIRES = 3600
+CELERY_WORKER_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'
+CELERY_WORKER_TASK_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_REDIRECT_STDOUTS = True
+CELERY_REDIRECT_STDOUTS_LEVEL = "INFO"
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
