@@ -48,6 +48,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
+    'django_filters',
+    'rest_framework',
+    'drf_yasg',
     'common.apps.CommonConfig',
     'consumer.apps.ConsumerConfig',
     'openapi.apps.OpenapiConfig',
@@ -123,9 +127,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
+#################################################
+# 语言和时区
+#################################################
 LANGUAGE_CODE = 'zh-Hans'
 
 TIME_ZONE = 'Asia/Shanghai'
@@ -144,24 +148,38 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+#################################################
 # celery配置
+#################################################
 _REDIS_PASSWD = config.get('REDIS_PASSWORD', '')
 REDIS_PASSWD = ConfObj.decrypt(_REDIS_PASSWD) if _REDIS_PASSWD else ''
 REDIS_HOST = config.get('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = config.get('REDIS_PORT', 6379)
 REDIS_DB = config.get('REDIS_DB', 0)
 
-CELERY_BROKER_URL = f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
-CELERY_TASK_SERIALIZER = 'pickle'
-CELERY_RESULT_SERIALIZER = 'pickle'
+# Broker 地址
+CELERY_BROKER_URL = f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'  # Broker 地址
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-CELERY_ACCEPT_CONTENT = ['json', 'pickle']
-CELERY_RESULT_EXPIRES = 3600
-CELERY_WORKER_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'
-CELERY_WORKER_TASK_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'
-CELERY_TASK_EAGER_PROPAGATES = True
-CELERY_REDIRECT_STDOUTS = True
-CELERY_REDIRECT_STDOUTS_LEVEL = "INFO"
-CELERY_WORKER_HIJACK_ROOT_LOGGER = False
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_ENABLE_UTC = True
+
+# 日期
+CELERY_TIMEZONE = TIME_ZONE  # 指定 Celery 使用的时区
+CELERY_ENABLE_UTC = True  # 确定是否启用协调世界时（UTC）作为 Celery 的默认时区
+
+# celery内容等消息的格式设置，默认json
+CELERY_TASK_SERIALIZER = 'json'  # 任务序列化方式
+CELERY_RESULT_SERIALIZER = 'json'  # 任务执行结果序列化方式
+CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # 指定任务接受的内容类型(序列化)
+
+# 日志
+CELERY_WORKER_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'  # Worker日志的格式
+CELERY_WORKER_TASK_LOG_FORMAT = '%(asctime)s [%(module)s %(levelname)s] %(message)s'  # 格式应用于任务相关的日志
+CELERY_TASK_EAGER_PROPAGATES = True  # 确定在执行任务时，是否将任务执行结果传播回调用者
+CELERY_REDIRECT_STDOUTS = True  # 确定是否重定向标准输出。如果设置为 True，则 Celery Worker 的标准输出会被重定向到日志系统。
+CELERY_REDIRECT_STDOUTS_LEVEL = "INFO"  # 指定重定向的标准输出的日志级别
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False  # 确定是否 Celery Worker 应该接管根日志记录器
+
+# 为存储结果设置过期日期，默认1天过期。如果beat开启，Celery每天会自动清除。 # 设为0，存储结果永不过期
+CELERY_RESULT_EXPIRES = 3600  # 任务过期时间
+
+# 任务调度器设为DatabaseScheduler
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
