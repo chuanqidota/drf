@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'drf_yasg',
+    'corsheaders',
     'common.apps.CommonConfig',
     'consumer.apps.ConsumerConfig',
     'openapi.apps.OpenapiConfig',
@@ -60,6 +61,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # 处理跨域
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -67,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'drf.urls'
@@ -280,3 +283,23 @@ LOGGING = {
         }
     }
 }
+
+#################################################
+# 跨域处理
+#################################################
+CORS_ALLOW_CREDENTIALS = True  # 指明在跨域访问中，后端是否支持对cookie的操作
+CORS_ORIGIN_ALLOW_ALL = True  # 设置支持所有域名访问,如果为False,需要指定域名
+CORS_ORIGIN_WHITELIST = ('*')  # 白名单，"*"支持所有域名进行访问，也可写成("域名1","域名")
+ALLOWED_HOSTS = ['*']  # 允许所有ip或域名
+# ALLOWED_HOSTS = ["域名1","域名2"]
+
+#################################################
+# debug-toolbar
+#################################################
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware')
+    INTERNAL_IPS = ['127.0.0.1']
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_COLLAPSED': True,
+    }
