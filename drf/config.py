@@ -30,7 +30,8 @@ class ConfObj:
             'REDIS_HOST': '',
             'REDIS_PORT': '',
             'REDIS_PASSWD': '',
-            'REDIS_DB': '',
+            'REDIS_BROKER_DB': '',
+            'REDIS_CACHE_DB': '',
 
             # es配置-配置安自身需求调整
             'ES_HOST': [''],
@@ -62,7 +63,8 @@ class ConfObj:
                 'REDIS_HOST': '',
                 'REDIS_PORT': '',
                 'REDIS_PASSWD': '',
-                'REDIS_DB': '',
+                'REDIS_BROKER_DB': '',
+                'REDIS_CACHE_DB': '',
 
                 # es配置
                 'ES_HOST': [],
@@ -95,7 +97,8 @@ class ConfObj:
                 'REDIS_HOST': '',
                 'REDIS_PORT': '',
                 'REDIS_PASSWD': '',
-                'REDIS_DB': '',
+                'REDIS_BROKER_DB': '',
+                'REDIS_CACHE_DB': '',
 
                 # es配置
                 'ES_HOST': [''],

@@ -13,6 +13,7 @@ import os
 import sys
 from pathlib import Path
 from MySQLdb.cursors import SSCursor
+from elasticsearch_dsl.connections import connections
 
 from app.common.apps import CommonConfig
 from app.consumer.apps import ConsumerConfig
@@ -88,27 +89,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'drf.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('MYSQL_NAME'),
-        'HOST': config.get('MYSQL_HOST'),
-        'PORT': config.get('MYSQL_PORT'),
-        'USER': config.get('MYSQL_USER'),
-        'PASSWORD': ConfObj.decrypt(config.get('MYSQL_PASSWORD')),
-        'ATOMIC_REQUESTS': False,
-        'OPTIONS': {
-            'init_command': 'SET sql_mode=STRICT_TRANS_TABLES',
-            'charset': 'utf8mb4',
-            'cursorclass': SSCursor,
-            # 'ssl_mode': 'DISABLED'
-        }
-    }
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -128,6 +108,27 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 #################################################
+# 数据库配置
+#################################################
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('MYSQL_NAME'),
+        'HOST': config.get('MYSQL_HOST'),
+        'PORT': config.get('MYSQL_PORT'),
+        'USER': config.get('MYSQL_USER'),
+        'PASSWORD': ConfObj.decrypt(config.get('MYSQL_PASSWORD')),
+        'ATOMIC_REQUESTS': False,
+        'OPTIONS': {
+            'init_command': 'SET sql_mode=STRICT_TRANS_TABLES',
+            'charset': 'utf8mb4',
+            'cursorclass': SSCursor,
+            # 'ssl_mode': 'DISABLED'
+        }
+    }
+}
+
+#################################################
 # 语言和时区
 #################################################
 LANGUAGE_CODE = 'zh-Hans'
@@ -138,14 +139,16 @@ USE_I18N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+#################################################
+# 静态文件配置
+#################################################
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
+#################################################
+# 默认主键配置
+#################################################
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #################################################
@@ -155,10 +158,10 @@ _REDIS_PASSWD = config.get('REDIS_PASSWORD', '')
 REDIS_PASSWD = ConfObj.decrypt(_REDIS_PASSWD) if _REDIS_PASSWD else ''
 REDIS_HOST = config.get('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = config.get('REDIS_PORT', 6379)
-REDIS_DB = config.get('REDIS_DB', 0)
+REDIS_BROKER_DB = config.get('REDIS_BROKER_DB', 1)
 
 # Broker 地址
-CELERY_BROKER_URL = f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'  # Broker 地址
+CELERY_BROKER_URL = f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}'  # Broker 地址
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 # 日期
@@ -183,3 +186,97 @@ CELERY_RESULT_EXPIRES = 3600  # 任务过期时间
 
 # 任务调度器设为DatabaseScheduler
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+#################################################
+# redis-cache配置
+#################################################
+REDIS_CACHE_DB = config.get('REDIS_CACHE_DB', 0)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+#################################################
+# es配置
+#################################################
+ES_HOST = config.get('ES_HOST')
+ES_PORT = config.get('ES_PORT')
+ES_USERNAME = config.get('ES_USERNAME')
+ES_PASSWORD = ConfObj.decrypt(config.get('ES_PASSWORD')) if config.get('ES_PASSWORD') else ''
+ES = {
+    'default': {
+        'hosts': ES_HOST,
+        'port': ES_PORT,
+        'http_auth': (ES_USERNAME, ES_PASSWORD)
+    }
+}
+connections.configure(**ES)
+
+#################################################
+# 日志配置
+#################################################
+logs_dir = os.path.join(BASE_DIR.parent, 'logs')
+if not os.path.exists(logs_dir):
+    os.makedirs(logs_dir)
+if not os.path.exists(os.path.join(logs_dir, 'drf')):
+    os.makedirs(os.path.join(logs_dir, 'drf'))
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s  %(pathname)s %(module)s '
+                      '%(process)d %(thread)d line-%(lineno)s %(message)s'
+        },
+        'main': {
+            'datefmt': '%Y-%m-%d %H:%M:%S.000',
+            'format': '[%(asctime)s] %(levelname)s %(process)d [][][] : %(module)s line-%(lineno)s %(message)s',
+        },
+        'simple': {
+            'format': '%(levelname)s line-%(lineno)s %(message)s'
+        }
+    },
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'main'
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'main',
+            'filename': os.path.join(logs_dir, 'drf', 'drf.log')
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['null'],
+            'propagate': False,
+            'level': config.get('LOG_LEVEL'),
+        },
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': config.get('LOG_LEVEL'),
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console', 'file'],
+            'level': config.get('LOG_LEVEL'),
+            'propagate': False,
+        },
+        'drf': {
+            'handlers': ['console', 'file'],
+            'level': config.get('LOG_LEVEL')
+        }
+    }
+}
