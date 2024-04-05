@@ -12,12 +12,14 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import sys
 from pathlib import Path
-from MySQLdb.cursors import SSCursor
+
+import pymysql
+# from MySQLdb.cursors import SSCursor
 from elasticsearch_dsl.connections import connections
 
-from app.common.apps import CommonConfig
-from app.consumer.apps import ConsumerConfig
-from app.openapi.apps import OpenapiConfig
+from apps.common.apps import CommonConfig
+from apps.consumer.apps import ConsumerConfig
+from apps.openapi.apps import OpenapiConfig
 from drf.config import ConfObj
 
 config = ConfObj.get_conf()
@@ -41,7 +43,6 @@ USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'corsheaders',
+    'rest_framework.authtoken',
     'common.apps.CommonConfig',
     'consumer.apps.ConsumerConfig',
     'openapi.apps.OpenapiConfig',
@@ -69,7 +71,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
 ]
 
 ROOT_URLCONF = 'drf.urls'
@@ -113,10 +114,11 @@ AUTH_PASSWORD_VALIDATORS = [
 #################################################
 # 数据库配置
 #################################################
+pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('MYSQL_NAME'),
+        'NAME': config.get('MYSQL_NAME'),
         'HOST': config.get('MYSQL_HOST'),
         'PORT': config.get('MYSQL_PORT'),
         'USER': config.get('MYSQL_USER'),
@@ -125,7 +127,7 @@ DATABASES = {
         'OPTIONS': {
             'init_command': 'SET sql_mode=STRICT_TRANS_TABLES',
             'charset': 'utf8mb4',
-            'cursorclass': SSCursor,
+            # 'cursorclass': SSCursor,
             # 'ssl_mode': 'DISABLED'
         }
     }
@@ -289,7 +291,7 @@ LOGGING = {
 #################################################
 CORS_ALLOW_CREDENTIALS = True  # 指明在跨域访问中，后端是否支持对cookie的操作
 CORS_ORIGIN_ALLOW_ALL = True  # 设置支持所有域名访问,如果为False,需要指定域名
-CORS_ORIGIN_WHITELIST = ('*')  # 白名单，"*"支持所有域名进行访问，也可写成("域名1","域名")
+CORS_ORIGIN_WHITELIST = ('http://127.0.0.1:8080',)  # 白名单，"*"支持所有域名进行访问，也可写成("域名1","域名")
 ALLOWED_HOSTS = ['*']  # 允许所有ip或域名
 # ALLOWED_HOSTS = ["域名1","域名2"]
 
@@ -298,8 +300,27 @@ ALLOWED_HOSTS = ['*']  # 允许所有ip或域名
 #################################################
 if DEBUG:
     INSTALLED_APPS.append('debug_toolbar')
-    MIDDLEWARE.insert(0, 'debug_toolbar.middleware')
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
     INTERNAL_IPS = ['127.0.0.1']
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_COLLAPSED': True,
     }
+
+#################################################
+# rest-framework
+#################################################
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 15,
+    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',  # 返回给前端的时间为北京时间，不带时区格式,
+    'DATE_FORMAT': '%Y-%m-%d',
+}

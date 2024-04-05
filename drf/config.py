@@ -7,7 +7,7 @@ class ConfObj:
     @staticmethod
     def get_conf():
         # get running env
-        env = os.getenv('cmdbEnv', None)
+        env = os.getenv('drfEnv', None)
 
         # default is developer env config
         conf_default = {
@@ -24,7 +24,8 @@ class ConfObj:
             'MYSQL_HOST': '127.0.0.1',
             'MYSQL_PORT': '3306',
             'MYSQL_USER': 'root',
-            'MYSQL_PASSWORD': '',
+            'MYSQL_PASSWORD': 'gAAAAABmDzXLs5W4o3VsfiAG6819KpCMP7LBuOWMqhSdCMjSmYC-C7-c'
+                              '8XHTBcMv80NJhuTOnmSNqtBmnAYE8imQCF563Hp4pg==',
 
             # redis
             'REDIS_HOST': '',
