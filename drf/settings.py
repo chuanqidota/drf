@@ -157,6 +157,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #################################################
+# 用户
+#################################################
+AUTH_USER_MODEL = 'user.User'
+
+#################################################
 # celery配置
 #################################################
 _REDIS_PASSWD = config.get('REDIS_PASSWORD', '')
@@ -310,17 +315,35 @@ if DEBUG:
 # rest-framework
 #################################################
 REST_FRAMEWORK = {
+    # 认证
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    # 权限
+    'DEFAULT_PERMISSION_CLASSES': [
+        'common.permissions.IsValidUser',
+    ],
+    # 渲染器
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    # 过滤器
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    # 分页
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 15,
+    # 时间格式
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',  # 返回给前端的时间为北京时间，不带时区格式,
     'DATE_FORMAT': '%Y-%m-%d',
+    # 搜索
+    'SEARCH_PARAM': 'search',  # 可以更改
+    'ORDERING_PARAM': 'ordering',  # 可以更改
+    # 异常处理
+    'EXCEPTION_HANDLER': 'common.exceptions.exception_handler'
 }

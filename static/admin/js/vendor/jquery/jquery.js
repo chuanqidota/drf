@@ -1131,7 +1131,7 @@ function setDocument( node ) {
 		documentElement.msMatchesSelector;
 
 	// Support: IE 9 - 11+, Edge 12 - 18+
-	// Accessing iframe documents after unload throws "permission denied" errors
+	// Accessing iframe documents after unload throws "permissions denied" errors
 	// (see trac-13936).
 	// Limit the fix to IE & Edge Legacy; despite Edge 15+ implementing `matches`,
 	// all IE 9+ and Edge Legacy versions implement `msMatchesSelector` as well.
@@ -7826,7 +7826,7 @@ jQuery.fx.speeds = {
 };
 
 
-// Based off of the plugin by Clint Helfers, with permission.
+// Based off of the plugin by Clint Helfers, with permissions.
 jQuery.fn.delay = function( time, type ) {
 	time = jQuery.fx ? jQuery.fx.speeds[ time ] || time : time;
 	type = type || "fx";
