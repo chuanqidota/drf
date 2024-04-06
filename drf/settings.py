@@ -14,12 +14,10 @@ import sys
 from pathlib import Path
 
 import pymysql
+from django.urls import reverse_lazy
 # from MySQLdb.cursors import SSCursor
 from elasticsearch_dsl.connections import connections
 
-from apps.common.apps import CommonConfig
-from apps.consumer.apps import ConsumerConfig
-from apps.openapi.apps import OpenapiConfig
 from drf.config import ConfObj
 
 config = ConfObj.get_conf()
@@ -156,9 +154,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #################################################
-# 用户
+# 用户-认证
 #################################################
 AUTH_USER_MODEL = 'user.User'
+AUTHENTICATION_BACKENDS = ['user.auth.backends.UserPassWordAuthBackend']  # 认证回调
+UNLOGIN_STATUS = 299  # 登录到期相应状态码
+LOGIN_URL = reverse_lazy('user:login')
 
 #################################################
 # celery配置
@@ -322,7 +323,7 @@ REST_FRAMEWORK = {
     # 权限
     'DEFAULT_PERMISSION_CLASSES': [
         'common.permissions.IsValidUser',
-    ],    # 渲染器
+    ],  # 渲染器
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',

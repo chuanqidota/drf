@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from apps.common.crypt.api import signer
-from apps.common.models import BaseModel
+from common.crypt.api import signer
+from common.models import BaseModel
 
 
 class Org(BaseModel):
@@ -14,6 +14,7 @@ class Org(BaseModel):
 
     class Meta:
         verbose_name = '组织架构'
+        app_label = 'user'
 
 
 class User(BaseModel):
@@ -45,7 +46,7 @@ class User(BaseModel):
     def is_anonymous(self):
         """
         Always return False. This is a way of comparing User objects to
-        anonymous users.
+        anonymous user.
         """
         return False
 
@@ -72,3 +73,7 @@ class User(BaseModel):
 
     def __str__(self):
         return f'{self.name}({self.username})'
+
+    class Meta:
+        verbose_name = '用户'
+        app_label = "user"

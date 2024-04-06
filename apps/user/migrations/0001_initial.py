@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                 ('dept', models.ForeignKey(blank=True, db_comment='部门', null=True, on_delete=django.db.models.deletion.SET_NULL, to='user.org')),
             ],
             options={
-                'verbose_name': '基础模型',
+                'verbose_name': '用户',
                 'abstract': False,
             },
         ),
