@@ -71,6 +71,22 @@ class User(BaseModel):
             return False
         return password == self.password
 
+    @property
+    def dept_name(self):
+        return self.dept.name if self.dept else ""
+
+    @property
+    def role_display(self):
+        return self.get_role_display()
+
+    @property
+    def account_display(self):
+        return self.get_account_type_display()
+
+    @property
+    def is_active_display(self):
+        return "是" if self.is_active else "否"
+
     def __str__(self):
         return f'{self.name}({self.username})'
 

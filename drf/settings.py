@@ -156,10 +156,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #################################################
 # 用户-认证
 #################################################
-AUTH_USER_MODEL = 'user.User'
+AUTH_USER_MODEL = 'user.User'  # 重新制定用户模块
 AUTHENTICATION_BACKENDS = ['user.auth.backends.UserPassWordAuthBackend']  # 认证回调
 UNLOGIN_STATUS = 299  # 登录到期相应状态码
 LOGIN_URL = reverse_lazy('user:login')
+LOGIN_REDIRECT_URL = '/api/user/'  # drf文档登录后重定向地址
 
 #################################################
 # celery配置
