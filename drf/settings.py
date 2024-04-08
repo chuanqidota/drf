@@ -326,7 +326,8 @@ REST_FRAMEWORK = {
     # 权限
     'DEFAULT_PERMISSION_CLASSES': [
         'common.permissions.IsValidUser',
-    ],  # 渲染器
+    ],  
+    # 渲染器
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
