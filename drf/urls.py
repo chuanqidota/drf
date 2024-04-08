@@ -19,8 +19,12 @@ from django.urls import path, include
 
 from drf import settings
 
+from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
+    
 urlpatterns = [
     path("", include("rest_framework.urls")),  # 登录按钮
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # {"username":"","password":""}
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # {"refresh":"上面接口返回的refresh字段"}
     path('api/user/', include('user.urls.api_urls'), name='user-api'),
 ]
 

@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'drf_yasg',
+    'rest_framework_simplejwt',
     'corsheaders',
     'rest_framework.authtoken',
     'common.apps.CommonConfig',
@@ -320,6 +321,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
     ],
     # 权限
     'DEFAULT_PERMISSION_CLASSES': [
