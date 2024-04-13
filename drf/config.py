@@ -35,8 +35,7 @@ class ConfObj:
             'REDIS_CACHE_DB': '',
 
             # es配置-配置安自身需求调整
-            'ES_HOST': [''],
-            'ES_PORT': '9200',
+            'ES_HOST_PORT': ['http://127.0.0.1:9200'],
             'ES_USERNAME': '',
             'ES_PASSWORD': '',
             # 审计
@@ -68,8 +67,7 @@ class ConfObj:
                 'REDIS_CACHE_DB': '',
 
                 # es配置
-                'ES_HOST': [],
-                'ES_PORT': '9200',
+                'ES_HOST_PORT': [],
                 'ES_USERNAME': '',
                 'ES_PASSWORD': '',
 
@@ -102,8 +100,7 @@ class ConfObj:
                 'REDIS_CACHE_DB': '',
 
                 # es配置
-                'ES_HOST': [''],
-                'ES_PORT': '',
+                'ES_HOST_PORT': [''],
                 'ES_USERNAME': '',
                 'ES_PASSWORD': '',
 

@@ -70,6 +70,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'common.middleware.audit.AuditMiddleware',
 ]
 
 ROOT_URLCONF = 'drf.urls'
@@ -216,13 +217,12 @@ CACHES = {
 #################################################
 # es配置
 #################################################
-ES_HOST = config.get('ES_HOST')
-ES_PORT = config.get('ES_PORT')
+ES_HOST_PORT = config.get('ES_HOST_PORT')
 ES_USERNAME = config.get('ES_USERNAME')
 ES_PASSWORD = ConfObj.decrypt(config.get('ES_PASSWORD')) if config.get('ES_PASSWORD') else ''
 ES = {
     'default': {
-        'hosts': f"http://{ES_HOST}:{ES_PORT}",
+        'hosts': ES_HOST_PORT,
         'http_auth': (ES_USERNAME, ES_PASSWORD)
     }
 }
@@ -350,3 +350,8 @@ REST_FRAMEWORK = {
     # 异常处理
     'EXCEPTION_HANDLER': 'common.exceptions.exception_handler'
 }
+
+#################################################
+# ES-索引
+#################################################
+BASIC_AUDIT_INDEX = "basic-audit-index"
