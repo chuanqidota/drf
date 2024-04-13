@@ -83,13 +83,13 @@ class AuditMiddleware:
         if not es.exist_index(index):
             mapping = {
                 "api": {"type": "keyword"},
-                "create_date": {"type": "datetime"},
+                "create_date": {"type": "keyword"},
                 "user_ip": {"type": "keyword"},
                 "method": {"type": "keyword"},
                 "name": {"type": "keyword"},
                 "username": {"type": "keyword"},
-                "params": {"type": "text"},
-                "detail": {"type": "text"},
+                "params": {"type": "keyword"},
+                "detail": {"type": "keyword"},
                 "url_name": {"type": "keyword"},
                 "user_agent": {"type": "keyword"}
             }

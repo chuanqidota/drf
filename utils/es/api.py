@@ -1,6 +1,7 @@
 import datetime
 
 from elasticsearch_dsl.connections import get_connection
+from elasticsearch_dsl._sync.search import Search
 
 
 class ElasticSearchManager(object):

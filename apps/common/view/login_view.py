@@ -10,15 +10,12 @@ from drf import settings
 
 class LoginRequiredMixin(AccessMixin):
     """
-    Verify that the current user is authenticated.
-    根据dev_mode: 开发时打开此选项便于使用postman调试接口
+        debug模式下不用登录
     """
-
-    dev_mode = True if os.getenv("drfEnv") else False
 
     def dispatch(self, request, *args, **kwargs):
         # 生产环境强制开启登录验证
-        if (not settings.DEBUG or not self.dev_mode) and not request.user.is_authenticated:
+        if not settings.DEBUG and not request.user.is_authenticated:
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -49,4 +46,3 @@ class LoginUserModelViewSet(LoginRequiredMixin, UserModelViewSet):
     """
 
     pass
-
