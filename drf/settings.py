@@ -325,7 +325,7 @@ REST_FRAMEWORK = {
     ],
     # 权限
     'DEFAULT_PERMISSION_CLASSES': [
-        'common.permissions.IsValidUser',
+        'apps.common.permissions.IsValidUser',
     ],  
     # 渲染器
     'DEFAULT_RENDERER_CLASSES': [
@@ -344,6 +344,7 @@ REST_FRAMEWORK = {
     # 时间格式
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',  # 返回给前端的时间为北京时间，不带时区格式,
     'DATE_FORMAT': '%Y-%m-%d',
+    'TIME_FORMAT': "%H:%M:%S",
     # 搜索
     'SEARCH_PARAM': 'search',  # 可以更改
     'ORDERING_PARAM': 'ordering',  # 可以更改
