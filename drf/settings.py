@@ -222,8 +222,7 @@ ES_USERNAME = config.get('ES_USERNAME')
 ES_PASSWORD = ConfObj.decrypt(config.get('ES_PASSWORD')) if config.get('ES_PASSWORD') else ''
 ES = {
     'default': {
-        'hosts': ES_HOST,
-        'port': ES_PORT,
+        'hosts': f"http://{ES_HOST}:{ES_PORT}",
         'http_auth': (ES_USERNAME, ES_PASSWORD)
     }
 }
