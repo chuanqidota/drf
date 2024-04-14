@@ -12,6 +12,8 @@ from drf import settings
 
 class LoginView(APIView):
     permission_classes = (AllowAny,)
+    tags = ["登录"]
+    operation_id = "登录"
 
     def dispatch(self, request, *args, **kwargs):
         """
@@ -22,6 +24,8 @@ class LoginView(APIView):
 
 class LogoutView(LoginApiView):
     http_method_names = ['get']
+    tags = ["登录"]
+    operation_id = "登出"
 
     def get(self, request):
         """
@@ -35,6 +39,8 @@ class LogoutView(LoginApiView):
 
 class ManualLoginView(APIView):
     permission_classes = (AllowAny,)
+    tags = ["登录"]
+    operation_id = "手动登录"
 
     def post(self, request):
         """

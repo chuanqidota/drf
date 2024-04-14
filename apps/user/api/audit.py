@@ -11,6 +11,8 @@ logger = logging.getLogger("drf")
 
 
 class AuditView(LoginApiView):
+    tags = ["审计"]
+    operation_id = "审计查看"
 
     def get(self, request):
         search = request.query_params.get('search')

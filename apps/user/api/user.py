@@ -18,10 +18,8 @@ class OrgViewSet(LoginModelViewSet):
     search_fields = ['name']
     filterset_fields = ['name']
     ordering_fields = ['name', 'dept_id', 'level']
-    tags = ["用户"]
-    operation_id = "用户操作"
-
-
+    tags = ["部门"]
+    operation_id = "部门操作"
 
 
 class UserViewSet(LoginModelViewSet, ExportMix):
@@ -32,6 +30,8 @@ class UserViewSet(LoginModelViewSet, ExportMix):
     search_fields = ['username', 'name', 'emp_no', 'dept__name']
     filterset_fields = ['role', 'account_type']
     ordering_fields = ['username']
+    tags = ["用户"]
+    operation_id = "用户操作"
 
     file_name = "user"
     xlsx_header_to_fields = {
