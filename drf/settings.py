@@ -341,23 +341,24 @@ if DEBUG:
 # swagger-配置
 #################################################
 SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
+    'SECURITY_DEFINITIONS': {  # 定义API安全验证的方式，这里定义了使用api_key进行验证
         "api_key": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
+            "type": "apiKey",  # 验证类型为apiKey
+            "name": "Authorization",  # API密钥的名称
+            "in": "header"  # 密钥放置的位置为请求头
         },
     },
-    'APIS_SORTER': 'alpha',
-    'JSON_EDITOR': True,
-    'OPERATIONS_SORTER': 'alpha',
-    'VALIDATOR_URL': None,
-    'USE_SESSION_AUTH': True,
-    'SHOW_EXTENSIONS': True,
-    'DEFAULT_AUTO_SCHEMA_CLASS': "common.swagger.api.CustomAutoSchema",
-    'PERSIST_AUTH': True,
-    'DEEP_LINKING': True,
-    'DEFAULT_MODEL_RENDERING': 'example',
+    'APIS_SORTER': 'alpha',  # 按照字母顺序对API进行排序
+    'JSON_EDITOR': True,  # 是否启用JSON编辑器
+    'OPERATIONS_SORTER': 'alpha',  # 按照字母顺序对操作进行排序
+    'VALIDATOR_URL': None,  # 验证器的URL，设置为None表示不使用外部验证服务
+    'USE_SESSION_AUTH': True,  # 是否使用会话认证
+    'SHOW_EXTENSIONS': True,  # 是否显示扩展信息
+    'DEFAULT_AUTO_SCHEMA_CLASS': "common.swagger.api.CustomAutoSchema",  # 默认的自动模式类，用于自定义Schema的展示
+    'PERSIST_AUTH': True,  # 是否保持认证状态
+    'DEEP_LINKING': True,  # 是否启用深度链接
+    'DEFAULT_MODEL_RENDERING': 'example',  # 默认的模型渲染方式，这里设置为展示示例
+    'DISPLAY_OPERATION_ID': True  # 是否显示操作ID
 }
 
 #################################################
@@ -378,7 +379,6 @@ connections.configure(**ES)
 # 网站-url
 #################################################
 WEB_URL = config.get('WEB_URL')
-
 
 #################################################
 # ES-索引

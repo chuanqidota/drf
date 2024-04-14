@@ -34,7 +34,7 @@ class AuditMiddleware:
             )
         else:
             params = self.body.decode()
-        params = f"url参数:{query_params}\nbody参数-{params[:30000]}"
+        params = f"url参数:{query_params}\nbody参数-{params}"[:3000]
         doc = url_match.func.__doc__
         if doc:
             doc = doc.strip().replace('：', ':').replace(' ', '').replace(':\n', ':')
