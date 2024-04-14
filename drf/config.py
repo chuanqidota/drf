@@ -38,8 +38,10 @@ class ConfObj:
             'ES_HOST_PORT': ['http://127.0.0.1:9200'],
             'ES_USERNAME': '',
             'ES_PASSWORD': '',
-            # 审计
-            'AUDIT_XLSX': '/tmp/'
+
+            # 网站url
+            "WEB_URL": "http://127.0.0.1:8000"
+
         }
 
         # test env config
@@ -71,8 +73,8 @@ class ConfObj:
                 'ES_USERNAME': '',
                 'ES_PASSWORD': '',
 
-                # 审计
-                'AUDIT_XLSX': '/tmp/'
+                # 网站url
+                "WEB_URL": "http://127.0.0.1:8000"
             })
 
         # product env config
@@ -104,8 +106,8 @@ class ConfObj:
                 'ES_USERNAME': '',
                 'ES_PASSWORD': '',
 
-                # 审计
-                'AUDIT_XLSX': '/tmp/',
+                # 网站url
+                "WEB_URL": "http://127.0.0.1:8000"
             })
 
         return conf_default

@@ -215,18 +215,43 @@ CACHES = {
 }
 
 #################################################
-# es配置
+# rest-framework
 #################################################
-ES_HOST_PORT = config.get('ES_HOST_PORT')
-ES_USERNAME = config.get('ES_USERNAME')
-ES_PASSWORD = ConfObj.decrypt(config.get('ES_PASSWORD')) if config.get('ES_PASSWORD') else ''
-ES = {
-    'default': {
-        'hosts': ES_HOST_PORT,
-        'http_auth': (ES_USERNAME, ES_PASSWORD)
-    }
+REST_FRAMEWORK = {
+    # 认证
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
+    ],
+    # 权限
+    'DEFAULT_PERMISSION_CLASSES': [
+        'apps.common.permissions.IsValidUser',
+    ],
+    # 渲染器
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    # 过滤器
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    # 分页
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 15,
+    # 时间格式
+    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',  # 返回给前端的时间为北京时间，不带时区格式,
+    'DATE_FORMAT': '%Y-%m-%d',
+    'TIME_FORMAT': "%H:%M:%S",
+    # 搜索
+    'SEARCH_PARAM': 'search',  # 可以更改
+    'ORDERING_PARAM': 'ordering',  # 可以更改
+    # 异常处理
+    'EXCEPTION_HANDLER': 'common.exceptions.exception_handler'
 }
-connections.configure(**ES)
 
 #################################################
 # 日志配置
@@ -313,43 +338,47 @@ if DEBUG:
     }
 
 #################################################
-# rest-framework
+# swagger-配置
 #################################################
-REST_FRAMEWORK = {
-    # 认证
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication'
-    ],
-    # 权限
-    'DEFAULT_PERMISSION_CLASSES': [
-        'apps.common.permissions.IsValidUser',
-    ],
-    # 渲染器
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ],
-    # 过滤器
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
-    ],
-    # 分页
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 15,
-    # 时间格式
-    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',  # 返回给前端的时间为北京时间，不带时区格式,
-    'DATE_FORMAT': '%Y-%m-%d',
-    'TIME_FORMAT': "%H:%M:%S",
-    # 搜索
-    'SEARCH_PARAM': 'search',  # 可以更改
-    'ORDERING_PARAM': 'ordering',  # 可以更改
-    # 异常处理
-    'EXCEPTION_HANDLER': 'common.exceptions.exception_handler'
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        "api_key": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+    },
+    'APIS_SORTER': 'alpha',
+    'JSON_EDITOR': True,
+    'OPERATIONS_SORTER': 'alpha',
+    'VALIDATOR_URL': None,
+    'USE_SESSION_AUTH': True,
+    'SHOW_EXTENSIONS': True,
+    'DEFAULT_AUTO_SCHEMA_CLASS': "common.swagger.api.CustomAutoSchema",
+    'PERSIST_AUTH': True,
+    'DEEP_LINKING': True,
+    'DEFAULT_MODEL_RENDERING': 'example',
 }
+
+#################################################
+# es配置
+#################################################
+ES_HOST_PORT = config.get('ES_HOST_PORT')
+ES_USERNAME = config.get('ES_USERNAME')
+ES_PASSWORD = ConfObj.decrypt(config.get('ES_PASSWORD')) if config.get('ES_PASSWORD') else ''
+ES = {
+    'default': {
+        'hosts': ES_HOST_PORT,
+        'http_auth': (ES_USERNAME, ES_PASSWORD)
+    }
+}
+connections.configure(**ES)
+
+#################################################
+# 网站-url
+#################################################
+WEB_URL = config.get('WEB_URL')
+
 
 #################################################
 # ES-索引

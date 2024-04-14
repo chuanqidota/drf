@@ -18,6 +18,10 @@ class OrgViewSet(LoginModelViewSet):
     search_fields = ['name']
     filterset_fields = ['name']
     ordering_fields = ['name', 'dept_id', 'level']
+    tags = ["用户"]
+    operation_id = "用户操作"
+
+
 
 
 class UserViewSet(LoginModelViewSet, ExportMix):
