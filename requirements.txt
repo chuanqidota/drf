@@ -25,3 +25,4 @@ python-consul==1.1.0
 etcd3==0.12.0
 rocketmq==0.4.4
 rocketmq-client-python==2.0.0
+boto3==1.34.88
