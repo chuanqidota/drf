@@ -10,13 +10,13 @@ pip install rocketmq
 """
 
 
-class ProducerHandle(object):
+class ProducerManager:
     """
         生产者
         _topic = ""
         _cluster = ""
         _body = {}
-        with ProducerHandle(_topic, _cluster, _body) as p:
+        with ProducerManager(_topic, _cluster, _body) as p:
             p.send_msg()
     """
 
@@ -59,12 +59,12 @@ class ProducerHandle(object):
         print(f"rocket-mq-发送消息-结果-{ret.msg_id}")
 
 
-class ConsumerHandle(object):
+class ConsumerManager:
     """
         消费者
         _topic = ""
         _cluster = ""
-        ConsumerHandle(_topic, _cluster).run()
+        ProducerManager(_topic, _cluster).run()
     """
 
     def __init__(self, topic, cluster, group="pass_group"):
@@ -94,10 +94,10 @@ if __name__ == '__main__':
     # 生产者
     """
     _body = {"data": "data"}
-    with ProducerHandle(_topic, _cluster, _body) as p:
+    with ProducerManager(_topic, _cluster, _body) as p:
         p.send_msg()
     """
     # 消费者
     """
-    ConsumerHandle(_topic, _cluster).run()
+    ProducerManager(_topic, _cluster).run()
     """
