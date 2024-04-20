@@ -8,12 +8,10 @@ class ConsulClient:
 
     def __init__(self, host='localhost', port=8500, token=None):
         """
-        初始化Consul客户端。
-
-        参数:
-        host: Consul服务的主机地址，默认为'localhost'。
-        port: Consul服务的端口号，默认为8500。
-        token: 访问Consul服务的令牌，默认为None。
+            初始化Consul客户端
+        :param host: Consul服务的主机地址，默认为'localhost'。
+        :param port: Consul服务的端口号，默认为8500。
+        :param token: 访问Consul服务的令牌，默认为None。
         """
         self.client = consul.Consul(host=host, port=port, token=token)  # 创建Consul客户端实例
 
