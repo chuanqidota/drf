@@ -1,7 +1,7 @@
 import consul
 
 
-class ConsulClient:
+class ConsulManager:
     """
         consul的相关操作
     """
