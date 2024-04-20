@@ -124,11 +124,11 @@ if __name__ == '__main__':
     #     excel.write_sheet_data(data1)
 
     # 写数据2
-    # data2 = [{'列头1': '数据1', '列头2': '数据2'}, {'列头1': '数据3', '列头2': '数据4'}]
-    # with ExcelManager("test2.xlsx", "w") as excel:
-    #     excel.write_sheet_data2(data2)
+    data2 = [{'列头1': '数据1', '列头2': '数据2'}, {'列头1': '数据3', '列头2': '数据4'}]
+    with ExcelManager("test2.xlsx", "w") as excel:
+        excel.write_sheet_data2(data2)
 
     # 读数据
-    with ExcelManager("test1.xlsx", "r") as excel:
-        data = excel.read_sheet_data()
-        print(data)
+    # with ExcelManager("test1.xlsx", "r") as excel:
+    #     data = excel.read_sheet_data()
+    #     print(data)
