@@ -1,9 +1,18 @@
+import os.path
+import traceback
+
 import gitlab
 
 
 class GitLabManager:
-    def __init__(self, url: str = "YOUR_GITLAB_URL", private_token: str = "YOUR_PRIVATE_TOKEN"):
-        self.gitlab = gitlab.Gitlab(url, private_token, ssl_verify=True)
+    def __init__(self, url, private_token):
+        """
+            初始化
+        :param url: url地址
+        :param private_token: token
+        """
+        # self.gitlab = gitlab.Gitlab(url, private_token, ssl_verify=True)
+        self.gitlab = gitlab.Gitlab(url, private_token)
 
     def get_user_info(self, user_id):
         """
@@ -18,14 +27,46 @@ class GitLabManager:
             列出所有可访问的项目
         :return:
         """
-        return self.gitlab.projects.list(all=True)
+        """
+        # 获取项目。默认获取第一页的项目，每页20个
+        projects = self.gitlab.projects.list()
+
+        # 获取指定页的项目
+        projects = self.gitlab.projects.list(page=2)
+
+        # 获取所有项目
+        projects = self.gitlab.projects.list(all=True)
+
+        # 根据项目名称搜索项目
+        projects = self.gitlab.projects.list(search='project_name')
+
+        # 获取archived项目
+        projects = self.gitlab.projects.list(archived=1)
+
+        # 根据项目visibility获取项目，public,internal,private
+        projects = self.gitlab.projects.list(visibility='public')
+
+        # 获取当前用户（token的账户）拥有的项目
+        projects = self.gitlab.projects.list(owned=True)
+
+        # 获取当前用户（token的账户）启动的项目
+        projects = self.gitlab.projects.list(starred=True)
+
+        # 搜索结果排序
+        # 在不指定的排序标准的情况下默认按照created_at,desc降序排列
+        # order_by参数：id, name, path, created_at, updated_at, last_activity_at.
+        # sort参数:asc,desc.
+        # 查找所有项目，并按照项目id升序排列
+        projects = self.gitlab.projects.list(all=True, order_by='id', sort="asc")
+        """
+        return self.gitlab.projects.list(owned=True)
 
     def create_project(self, name, description, visibility="private"):
         """
             创建新项目
         :param name: 项目名称
         :param description: 描述
-        :param visibility: 可见行
+        :param visibility: 可见行 private / public
         :return:
         """
         return self.gitlab.projects.create({"name": name, "description": description, "visibility": visibility})
@@ -46,7 +87,7 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         if project:
-            return project.branches.list()
+            return [branch.name for branch in project.branches.list()]
         else:
             return []
 
@@ -127,14 +168,14 @@ class GitLabManager:
         else:
             return None
 
-    def upload_file(self, project_id, file_path, content, branch="master", commit_message=""):
+    def upload_file(self, project_id, file_path, content, commit_message, branch="master"):
         """
             上传文件到项目仓库
-        :param project_id:
-        :param file_path:
-        :param content:
+        :param project_id: 项目id
+        :param file_path: 仓库的项目相对路径 ./REDME.md
+        :param content: with open("test.txt", "rb") as f: f.read()
+        :param commit_message:提交信息
         :param branch:
-        :param commit_message:
         :return:
         """
         project = self.get_project(project_id)
@@ -158,9 +199,9 @@ class GitLabManager:
     def download_file(self, project_id, file_path, ref="master"):
         """
             从项目仓库下载文件
-        :param project_id:
-        :param file_path:
-        :param ref:
+        :param project_id: 项目id
+        :param file_path: 仓库中的文件相对路径
+        :param ref: 分支
         :return:
         """
         project = self.get_project(project_id)
@@ -174,13 +215,13 @@ class GitLabManager:
         else:
             return None
 
-    def delete_file(self, project_id, file_path, branch="master", commit_message=""):
+    def delete_file(self, project_id, file_path, commit_message, branch="master"):
         """
             删除项目仓库中的文件
-        :param project_id:
-        :param file_path:
-        :param branch:
-        :param commit_message:
+        :param project_id: 项目id
+        :param file_path: 仓库中的文件相对路径
+        :param commit_message: 提交信息
+        :param branch: 分支
         :return:
         """
         project = self.get_project(project_id)
@@ -197,9 +238,9 @@ class GitLabManager:
     def get_file_content(self, project_id, file_path, ref="master"):
         """
             获取项目仓库中指定文件的内容
-        :param project_id:
-        :param file_path:
-        :param ref:
+        :param project_id: 项目id
+        :param file_path: 仓库中的文件相对路径
+        :param ref: 分支
         :return:
         """
         project = self.get_project(project_id)
@@ -403,6 +444,24 @@ class GitLabManager:
 
 if __name__ == '__main__':
     # 使用示例
-    manager = GitLabManager("YOUR_GITLAB_URL", "YOUR_PRIVATE_TOKEN")
-    projects = manager.list_projects()
-    print(f"Available projects: {len(projects)}")
+    YOUR_GITLAB_URL = "https://gitlab.com/"
+    YOUR_PRIVATE_TOKEN = "glpat-6Ua4cvm5QizX1Zv1xgc8"
+
+    manager = GitLabManager(YOUR_GITLAB_URL, YOUR_PRIVATE_TOKEN)
+    # print(manager.list_projects()[0].id)
+    # print(manager.create_project("api-project", "api-description"))
+    _project_id = 57091227
+    # print(manager.get_project(_project_id))
+    # print(manager.list_branches(_project_id))
+
+    # 上传文件
+    # _file_path = os.path.join(os.getcwd(), "REDME.md")
+    # with open(_file_path, "rb") as f:
+    #     _content = f.read()
+    # manager.upload_file(_project_id, "./REDME.md", _content, "init")
+
+    # 列出项目分支
+    # print(manager.list_branches(_project_id))
+
+    # 创建分支
+    # print(manager.create_branch(_project_id, "dev", "master"))
