@@ -120,13 +120,16 @@ class GitLabManager:
 
     def create_merge_request(self, project_id, source_branch, target_branch, title, description=None):
         """
-            在指定项目中创建新的合并请求
+            在指定项目中创建新的合并请求,这里存在失败的可能,需要特殊处理
         :param project_id: 项目id
         :param source_branch: 源分支
         :param target_branch: 目的分支
         :param title: 标题
         :param description: 描述
         :return:
+            对象可以通过点出来
+            {'id': 297344392, 'iid': 1, 'project_id': 57091227, 'title': 'title-test', 'description': 'description-test', 'state': 'opened', 'created_at': '2024-04-22T03:19:17.365Z', 'updated_at': '2024-04-22T03:19:17.365Z', 'merged_by': None, 'merge_user': None, 'merged_at': None, 'closed_by': None, 'closed_at': None, 'target_branch': 'master', 'source_branch': 'dev', 'user_notes_count': 0, 'upvotes': 0, 'downvotes': 0, 'author': {'id': 8730526, 'username': 'chuanqidota', 'name': 'chuanqidota', 'state': 'active', 'locked': False, 'avatar_url': 'https://secure.gravatar.com/avatar/d426a4bc823547a2902452c9c4906d39bb79fffae818ea89c5bcdddb12bb7ffc?s=80&d=identicon', 'web_url': 'https://gitlab.com/chuanqidota'}, 'assignees': [], 'assignee': None, 'reviewers': [], 'source_project_id': 57091227, 'target_project_id': 57091227, 'labels': [], 'draft': False, 'work_in_progress': False, 'milestone': None, 'merge_when_pipeline_succeeds': False, 'merge_status': 'checking', 'detailed_merge_status': 'preparing', 'sha': '8bc9bfd8f1b2846ec90ce3fff980a19045f1857e', 'merge_commit_sha': None, 'squash_commit_sha': None, 'discussion_locked': None, 'should_remove_source_branch': None, 'force_remove_source_branch': None, 'prepared_at': None, 'reference': '!1', 'references': {'short': '!1', 'relative': '!1', 'full': 'chuanqidota/api-project!1'}, 'web_url': 'https://gitlab.com/chuanqidota/api-project/-/merge_requests/1', 'time_stats': {'time_estimate': 0, 'total_time_spent': 0, 'human_time_estimate': None, 'human_total_time_spent': None}, 'squash': False, 'squash_on_merge': False, 'task_completion_status': {'count': 0, 'completed_count': 0}, 'has_conflicts': False, 'blocking_discussions_resolved': True, 'approvals_before_merge': None, 'subscribed': True, 'changes_count': None, 'latest_build_started_at': None, 'latest_build_finished_at': None, 'first_deployed_to_production_at': None, 'pipeline': None, 'head_pipeline': None, 'diff_refs': None, 'merge_error': None, 'user': {'can_merge': True}}
+            获取id,然后再接受合并
         """
         project = self.get_project(project_id)
         if project:
@@ -139,7 +142,23 @@ class GitLabManager:
             return project.mergerequests.create(mr_params)
         else:
             return None
+    
+    def accept_merge_request(self,project_id,merge_request_id,message):
 
+        # 获取项目对象 
+        project = self.get_project(project_id)
+        # 获取合并请求对象
+        merge_request = project.mergerequests.get(merge_request_id)
+        # 接受合并请求
+        merge_request.merge(merge_commit_message=message)
+
+    def delete_merge_request(self,project_id,merge_request_id):
+        # 获取项目对象
+        project = self.get_project(project_id)
+        # 删除合并请求
+        merge_request = project.mergerequests.delete(merge_request_id)
+    
+    
     def list_tags(self, project_id):
         """
             列出指定项目的所有标签
@@ -465,3 +484,9 @@ if __name__ == '__main__':
 
     # 创建分支
     # print(manager.create_branch(_project_id, "dev", "master"))
+
+    # 创建合并请求
+    # print(manager.create_merge_request(_project_id,"dev","master","title-test","description-test"))
+
+    # 接受合并请求
+    
