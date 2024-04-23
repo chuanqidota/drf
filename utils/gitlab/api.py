@@ -68,11 +68,12 @@ import gitlab
 
 
 class GitLabManager:
-    GuestAccessLevel = 10
-    ReporterAccessLevel = 20
-    DeveloperAccessLevel = 30
-    MaintainerAccessLevel = 40
-    OwnerAccessLevel = 50
+    # 成员角色的参数access_level
+    GuestAccessLevel = 10  # 只读访问，可以查看项目和组
+    ReporterAccessLevel = 20  # 可以查看项目和组，提交议题和合并请求
+    DeveloperAccessLevel = 30  # 含报告者权限，还可以推送至仓库分支和合并请求
+    MaintainerAccessLevel = 40  # 包含开发者权限，还可以管理组和项目，包括添加部署密钥、管理合作者、添加组成员等
+    OwnerAccessLevel = 50  # 全部权限，可以管理组和项目，以及转移和删除它们
 
     def __init__(self, url, private_token):
         """
@@ -243,7 +244,7 @@ class GitLabManager:
             用户操作>获取用户的详细信息根据username
         :param username: 用户名
         :return:
-        return self.gitlab.users.get_by_username(username)
+        <class 'gitlab.v4.objects.users.User'> => {'id': 8730526, 'username': 'chuanqidota', 'name': 'chuanqidota', 'state': 'active', 'locked': False, 'avatar_url': 'https://secure.gravatar.com/avatar/d426a4bc823547a2902452c9c4906d39bb79fffae818ea89c5bcdddb12bb7ffc?s=80&d=identicon', 'web_url': 'https://gitlab.com/chuanqidota', 'created_at': '2021-04-22T01:37:59.495Z', 'bio': '', 'location': '', 'public_email': '', 'skype': '', 'linkedin': '', 'twitter': '', 'discord': '', 'website_url': '', 'organization': '', 'job_title': '', 'pronouns': '', 'bot': False, 'work_information': None, 'local_time': '12:48 PM'}
         """
         users = self.gitlab.users.list(all=True, search=username)
         matching_users = [user for user in users if user.username == username]
@@ -256,7 +257,7 @@ class GitLabManager:
         """
             用户操作>更新用户
         :param user_id: 用户id
-        :param attributes: 属性
+        :param attributes: 属性 用户的属性和值
         :return:
         """
         user = self.gitlab.users.get(user_id)
@@ -305,6 +306,8 @@ class GitLabManager:
         """
             项目操作>列出所有可访问的项目
         :return:
+            [<Project id:57200632 path_with_namespace:chuanqidota/test_project1>, <Project id:57183172 path_with_namespace:test4693117/test_project>, <Project id:57091227 path_with_namespace:chuanqidota/api-project>, <Project id:55973645 path_with_namespace:chuanqidota/test_merge>, <Project id:55842206 path_with_namespace:chuanqidota/test-merger>, <Project id:50854258 path_with_namespace:chuanqidota/demo01>, <Project id:50736341 path_with_namespace:chuanqidota/demo>, <Project id:41395023 path_with_namespace:chuanqidota/rbac>, <Project id:40557636 path_with_namespace:chuanqidota/cmdb>, <Project id:34698422 path_with_namespace:chuanqidota/flask>, <Project id:31954731 path_with_namespace:chuanqidota/panda2>, <Project id:31954526 path_with_namespace:chuanqidota/panda>]
+
         """
         """
         # 获取项目。默认获取第一页的项目，每页20个
@@ -348,6 +351,17 @@ class GitLabManager:
         """
         return self.gitlab.projects.get(project_id)
 
+    def get_project_by_name(self, project_name):
+        """
+            项目操作>获取项目根据名称
+        :param project_name: 项目名称
+        :return:
+        """
+        projects = self.gitlab.projects.list(search=project_name)
+        if projects:
+            return projects[0]
+        return None
+
     def update_project(self, project_id, attributes):
         """
             项目操作>更新项目
@@ -372,10 +386,12 @@ class GitLabManager:
     def create_branch(self, project_id, branch_name, ref):
         """
             分支操作>创建新分支
+            需要提前有一个分支，也就是需要提前上传文件才行
         :param project_id: 项目id
         :param branch_name: 项目名称
         :param ref: 参考那个分支
         :return:
+        <class 'gitlab.v4.objects.branches.ProjectBranch'> => {'name': 'dev', 'commit': {'id': '83bef0e59c25d8b1b20551255ea8ef4844bc17a5', 'short_id': '83bef0e5', 'created_at': '2024-04-23T22:48:53.000+00:00', 'parent_ids': ['e8bcf35ba0816b4322fe916e0260abf9b36d0e38'], 'title': 'add README.md', 'message': 'add README.md', 'author_name': 'chuanqidota', 'author_email': 'chuanqidota@126.com', 'authored_date': '2024-04-23T22:48:53.000+00:00', 'committer_name': 'chuanqidota', 'committer_email': 'chuanqidota@126.com', 'committed_date': '2024-04-23T22:48:53.000+00:00', 'trailers': {}, 'extended_trailers': {}, 'web_url': 'https://gitlab.com/test4693117/test_project/-/commit/83bef0e59c25d8b1b20551255ea8ef4844bc17a5'}, 'merged': False, 'protected': False, 'developers_can_push': False, 'developers_can_merge': False, 'can_push': True, 'default': False, 'web_url': 'https://gitlab.com/test4693117/test_project/-/tree/dev'}
         """
         project = self.get_project(project_id)
         return project.branches.create({"branch": branch_name, "ref": ref})
@@ -385,6 +401,7 @@ class GitLabManager:
             分支操作>列出项目的所有分支
         :param project_id: 项目id
         :return:
+            ['dev', 'main']
         """
         project = self.get_project(project_id)
         return [branch.name for branch in project.branches.list()]
@@ -409,12 +426,48 @@ class GitLabManager:
         :param project_id:
         :param branch_name:
         :param push_access_levels:
+            类型：列表，元素为字典，表示访问级别对象
+            含义：定义哪些用户或组可以在受保护分支上推送代码。每个访问级别对象通常包含access_level（整数，表示权限级别）、user_id（用户ID，可选）或group_id（组ID，可选）。
+            如何传参：提供一个包含访问级别对象的列表
+            push_access_levels = [
+                {"access_level": 40, "user_id": 1},
+                {"access_level": 30, "group_id": 7}
+            ]
         :param merge_access_levels:
+            类型：列表，元素为字典，表示访问级别对象
+            含义：定义哪些用户或组可以在受保护分支上合并代码。结构同push_access_levels。
+            如何传参：类似push_access_levels，提供一个包含访问级别对象的列表
+            merge_access_levels=[
+                {"access_level": 40, "user_id": 8},
+                {"access_level": 30, "group_id": 9}
+            ]
         :param unprotect_access_levels:
+            类型：列表，元素为字典，表示访问级别对象
+            含义：定义哪些用户或组可以解除对受保护分支的保护。结构同push_access_levels。
+            如何传参：类似push_access_levels，提供一个包含访问级别对象的列表
+            [{"access_level": 50}]
         :param code_owner_approval_required:
+            类型：布尔值
+            含义：是否要求代码所有者批准才能合并到受保护分支。
+            如何传参：传入True表示需要代码所有者批准，传入False表示不需要。例如：code_owner_approval_required = True
         :param approvals_required:
+            类型：整数
+            含义：合并请求需要获得的最小批准数量。
+            如何传参：提供一个整数值，表示所需的批准数量。例如：approvals_required = 2
         :param approval_rules:
+            类型：列表，元素为字典，表示审批规则对象
+            含义：自定义审批规则，可以指定特定的用户、组或角色需要对合并请求进行审批。
+            如何传参：提供一个包含审批规则对象的列表，例如：
+            approval_rules = [
+                {
+                    "name": "Backend Team Approval",
+                    "user_ids": [1, 2],
+                    "group_ids": [5],
+                    "approvals_required": 1
+                }
+            ]
         :return:
+        <class 'gitlab.v4.objects.branches.ProjectProtectedBranch'> => {'id': 100963842, 'name': 'dev', 'push_access_levels': [{'id': 119242780, 'access_level': 40, 'access_level_description': 'Maintainers', 'deploy_key_id': None, 'user_id': None, 'group_id': None}], 'merge_access_levels': [{'id': 106987999, 'access_level': 40, 'access_level_description': 'Maintainers', 'user_id': None, 'group_id': None}], 'allow_force_push': False, 'unprotect_access_levels': [{'id': 51365854, 'access_level': 40, 'access_level_description': 'Maintainers', 'user_id': None, 'group_id': None}], 'code_owner_approval_required': False, 'inherited': False}
         """
         project = self.get_project(project_id)
 
@@ -434,6 +487,7 @@ class GitLabManager:
         :param project_id:
         :param branch_name:
         :return:
+        <class 'gitlab.v4.objects.branches.ProjectProtectedBranch'> => {'id': 100963842, 'name': 'dev', 'push_access_levels': [{'id': 119242780, 'access_level': 40, 'access_level_description': 'Maintainers', 'deploy_key_id': None, 'user_id': None, 'group_id': None}], 'merge_access_levels': [{'id': 106987999, 'access_level': 40, 'access_level_description': 'Maintainers', 'user_id': None, 'group_id': None}], 'allow_force_push': False, 'unprotect_access_levels': [{'id': 51365854, 'access_level': 40, 'access_level_description': 'Maintainers', 'user_id': None, 'group_id': None}], 'code_owner_approval_required': False, 'inherited': False}
         """
         project = self.get_project(project_id)
         return project.protectedbranches.get(branch_name)
@@ -469,7 +523,7 @@ class GitLabManager:
 
     def delete_protected_branch(self, project_id, branch_name):
         """
-            分支操作>把保护分支删除
+            分支操作>把保护分支删除-分支直接删除
         :param project_id: 项目id
         :param branch_name: 分支名称
         :return:
@@ -500,7 +554,7 @@ class GitLabManager:
         :return:
             对象可以通过点出来
             {'id': 297344392, 'iid': 1, 'project_id': 57091227, 'title': 'title-test', 'description': 'description-test', 'state': 'opened', 'created_at': '2024-04-22T03:19:17.365Z', 'updated_at': '2024-04-22T03:19:17.365Z', 'merged_by': None, 'merge_user': None, 'merged_at': None, 'closed_by': None, 'closed_at': None, 'target_branch': 'master', 'source_branch': 'dev', 'user_notes_count': 0, 'upvotes': 0, 'downvotes': 0, 'author': {'id': 8730526, 'username': 'chuanqidota', 'name': 'chuanqidota', 'state': 'active', 'locked': False, 'avatar_url': 'https://secure.gravatar.com/avatar/d426a4bc823547a2902452c9c4906d39bb79fffae818ea89c5bcdddb12bb7ffc?s=80&d=identicon', 'web_url': 'https://gitlab.com/chuanqidota'}, 'assignees': [], 'assignee': None, 'reviewers': [], 'source_project_id': 57091227, 'target_project_id': 57091227, 'labels': [], 'draft': False, 'work_in_progress': False, 'milestone': None, 'merge_when_pipeline_succeeds': False, 'merge_status': 'checking', 'detailed_merge_status': 'preparing', 'sha': '8bc9bfd8f1b2846ec90ce3fff980a19045f1857e', 'merge_commit_sha': None, 'squash_commit_sha': None, 'discussion_locked': None, 'should_remove_source_branch': None, 'force_remove_source_branch': None, 'prepared_at': None, 'reference': '!1', 'references': {'short': '!1', 'relative': '!1', 'full': 'chuanqidota/api-project!1'}, 'web_url': 'https://gitlab.com/chuanqidota/api-project/-/merge_requests/1', 'time_stats': {'time_estimate': 0, 'total_time_spent': 0, 'human_time_estimate': None, 'human_total_time_spent': None}, 'squash': False, 'squash_on_merge': False, 'task_completion_status': {'count': 0, 'completed_count': 0}, 'has_conflicts': False, 'blocking_discussions_resolved': True, 'approvals_before_merge': None, 'subscribed': True, 'changes_count': None, 'latest_build_started_at': None, 'latest_build_finished_at': None, 'first_deployed_to_production_at': None, 'pipeline': None, 'head_pipeline': None, 'diff_refs': None, 'merge_error': None, 'user': {'can_merge': True}}
-            获取id,然后再接受合并
+            获取iid,然后再接受合并
         """
         project = self.get_project(project_id)
         data = {
@@ -517,6 +571,7 @@ class GitLabManager:
         :param project_id: 项目id
         :param state:
         :return:
+            [<ProjectMergeRequest iid:1>]
             返回的是对象 iid是项目merge的id
         """
         project = self.get_project(project_id)
@@ -562,7 +617,8 @@ class GitLabManager:
         :param tag_name: 标签名称
         :param ref: 参考的分支
         :param message: 描述信息
-        :return: 对象
+        :return:
+        <class 'gitlab.v4.objects.tags.ProjectTag'> => {'name': 'v1.0.0', 'message': 'test_tag', 'target': '40f4a6501e07e70a5fdb13f3784f9ef189843267', 'commit': {'id': '596d0b95b7fb21ed5e84c1d08740edfe8180b135', 'short_id': '596d0b95', 'created_at': '2024-04-23T23:11:41.000+00:00', 'parent_ids': ['83bef0e59c25d8b1b20551255ea8ef4844bc17a5'], 'title': 'add README.md', 'message': 'add README.md', 'author_name': 'chuanqidota', 'author_email': 'chuanqidota@126.com', 'authored_date': '2024-04-23T23:11:41.000+00:00', 'committer_name': 'chuanqidota', 'committer_email': 'chuanqidota@126.com', 'committed_date': '2024-04-23T23:11:41.000+00:00', 'trailers': {}, 'extended_trailers': {}, 'web_url': 'https://gitlab.com/test4693117/test_project/-/commit/596d0b95b7fb21ed5e84c1d08740edfe8180b135'}, 'protected': False, 'created_at': None}
         """
         project = self.get_project(project_id)
         tag_params = {"tag_name": tag_name, "ref": ref, "message": message}
@@ -572,7 +628,8 @@ class GitLabManager:
         """
             标签操作>列出指定项目的所有标签
         :param project_id: 项目id
-        :return: 对象
+        :return:
+            [<ProjectTag name:v1.0.0>]
         """
         project = self.get_project(project_id)
         return project.tags.list()
@@ -591,8 +648,10 @@ class GitLabManager:
     def upload_file(self, project_id, file_path, content, commit_message, branch="master"):
         """
             文件操作>上传文件到项目仓库
+            初次提交的时候指定分支就会在改分支上提交文件
+            后续需要新拉分支
         :param project_id: 项目id
-        :param file_path: 仓库的项目相对路径 ./REDME.md
+        :param file_path: 仓库的项目相对路径 REDME.md
         :param content: with open("test.txt", "rb") as f: f.read()
         :param commit_message:提交信息
         :param branch:
@@ -609,17 +668,17 @@ class GitLabManager:
         )
         return response
 
-    def download_file(self, project_id, file_path, ref="master"):
+    def get_file_content(self, project_id, file_path, ref="master"):
         """
-            文件操作>从项目仓库下载文件
+            文件操作>获取项目仓库中指定文件的内容
         :param project_id: 项目id
         :param file_path: 仓库中的文件相对路径
         :param ref: 分支
-        :return:
+        :return:byte 这个时候应该可以写入文件中
         """
         project = self.get_project(project_id)
-        file_content = project.files.raw(file_path, ref=ref)
-        return file_content.content
+        file_content = project.files.get(file_path, ref=ref)
+        return file_content
 
     def delete_file(self, project_id, file_path, commit_message, branch="master"):
         """
@@ -632,18 +691,6 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         return project.files.delete(file_path, branch=branch, commit_message=commit_message)
-
-    def get_file_content(self, project_id, file_path, ref="master"):
-        """
-            文件操作>获取项目仓库中指定文件的内容
-        :param project_id: 项目id
-        :param file_path: 仓库中的文件相对路径
-        :param ref: 分支
-        :return:
-        """
-        project = self.get_project(project_id)
-        file_data = project.files.get(file_path, ref=ref)
-        return file_data.decode()
 
     def update_file_content(self, project_id, file_path, new_content, commit_message, branch="master"):
         """
@@ -725,3 +772,89 @@ if __name__ == '__main__':
     # 用户操作>获取用户的详细信息根据username
     # user = manager.get_user_by_username("chuanqidota")
     # print(user)
+
+    # 项目操作>创建新项目
+    # project = manager.create_project("test_project", "test_project", "private")
+    # print(project)
+
+    # 项目操作>列出所有可访问的项目
+    # projects = manager.gitlab.projects.list(owned=True)
+    # print(projects)
+
+    # 项目操作>获取项目根据名称
+    # project = manager.get_project_by_name("test_project")
+    # print(project)
+
+    #  项目操作>更新项目
+    # attributes = {
+    #     "name": "test_project222",
+    #     "description": "22222",
+    #     "visibility": "public"
+    # }
+    # project = manager.update_project(project_id=57200632, attributes=attributes)
+    # print(project)
+
+    # 项目操作>删除项目
+    # print(manager.delete_project(57200632))
+
+    # 57183172
+    # 分支操作>创建新分支
+    # print(manager.create_branch(57183172, "dev", "master"))
+
+    # 文件操作>上传文件到项目仓库
+    # with open("REDME.md", "rb") as f:
+    #     contenct = f.read()
+    #     print(manager.upload_file(57183172, "./README3.md", contenct, "add README.md", "dev"))
+
+    # 分支操作>创建新分支
+    # print(manager.create_branch(57183172, "dev", "main"))
+
+    # 分支操作>列出项目的所有分支
+    # print(manager.list_branches(57183172))
+
+    # 分支操作>删除分支
+    # print(manager.delete_branch(57183172, "dev"))
+
+    # 分支操作>为项目中的分支设置保护规则
+    # print(manager.create_protect_branch(57183172, "dev"))
+
+    # 分支操作>获取指定分支的保护规则
+    #  print(manager.get_protected_branch(57183172, "dev"))
+
+    # 分支操作>把保护分支删除
+    # print(manager.delete_protected_branch(57183172, "dev"))
+
+    # 分支操作>设置默认分支
+    # print(manager.set_default_branch(57183172, "dev"))
+
+    # 合并请求操作
+    # print(manager.create_merge_request(57183172, "dev", "main", "test_merge_request", "test_merge_request_desc"))
+
+    # 合并请求操作
+    # print(manager.list_merge_requests(57183172))
+
+    # 合并请求操作>拒绝合并请求
+    # print(manager.reject_merge_request(57183172, 1))
+
+    # 合并请求操作>删除merge请求
+    # print(manager.delete_merge_request(57183172, 1))
+
+    # 标签操作>在指定项目中创建新标签
+    # print(manager.create_tag(57183172, "v1.0.0", "dev", "test_tag"))
+
+    # 标签操作>列出指定项目的所有标签
+    # print(manager.list_tags(57183172))
+
+    # 标签操作>删除标签
+    # print(manager.delete_tag(57183172, "v1.0.0"))
+
+    # 文件操作>从项目仓库下载文件
+    # print(manager.download_file(57183172, "README.md", "main"))
+
+    # 文件操作>删除项目仓库中的文件
+    # print(manager.delete_file(57183172, "README.md", "delete_file", "main"))
+
+    # 文件操作>更新项目仓库中的文件
+    with open("./REDME.md", "rb") as f:
+        content = f.read()
+        print(manager.update_file_content(57183172, "README1.md", content, "update-file","main"))
