@@ -411,6 +411,10 @@ class GitLabManager:
         protected_branch = project.protectedbranches.get(branch_name)
         protected_branch.delete()
     
+    def set_default_branch(self):
+        pass
+    
+    
     def create_merge_request(self, project_id, source_branch, target_branch, title, description=None):
         """
             在指定项目中创建新的合并请求,这里存在失败的可能,需要特殊处理
