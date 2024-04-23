@@ -500,7 +500,7 @@ class GitLabManager:
 
     def reject_merge_request(self,project_id, merge_request_iid):
         """
-            合并请求操作>
+            合并请求操作>拒绝合并请求
         """
         project = self.get_project(project_id)
         merge_request = project.mergerequests.get(merge_request_iid)
@@ -509,7 +509,7 @@ class GitLabManager:
 
     def delete_merge_request(self, project_id, merge_request_iid):
         """
-            删除merge请求
+            合并请求操作>删除merge请求
         :param project_id:
         :param merge_request_id:
         :return:
@@ -519,7 +519,7 @@ class GitLabManager:
 
      def create_tag(self, project_id, tag_name, ref, message):
         """
-            在指定项目中创建新标签
+            标签操作>在指定项目中创建新标签
         :param project_id: 项目标签
         :param tag_name: 标签名称
         :param ref: 参考的分支
@@ -533,7 +533,7 @@ class GitLabManager:
 
     def list_tags(self, project_id):
         """
-            列出指定项目的所有标签
+            标签操作>列出指定项目的所有标签
         :param project_id: 项目id
         :return: 对象
         """
@@ -543,7 +543,7 @@ class GitLabManager:
 
     def delete_tag(self, project_id, tag_name):
         """
-            删除tag
+            标签操作>删除tag
         :param project_id:
         :param tag_name:
         :return:
@@ -554,7 +554,7 @@ class GitLabManager:
 
     def upload_file(self, project_id, file_path, content, commit_message, branch="master"):
         """
-            上传文件到项目仓库
+            文件操作>上传文件到项目仓库
         :param project_id: 项目id
         :param file_path: 仓库的项目相对路径 ./REDME.md
         :param content: with open("test.txt", "rb") as f: f.read()
@@ -575,7 +575,7 @@ class GitLabManager:
 
     def download_file(self, project_id, file_path, ref="master"):
         """
-            从项目仓库下载文件
+            文件操作>从项目仓库下载文件
         :param project_id: 项目id
         :param file_path: 仓库中的文件相对路径
         :param ref: 分支
@@ -588,7 +588,7 @@ class GitLabManager:
 
     def delete_file(self, project_id, file_path, commit_message, branch="master"):
         """
-            删除项目仓库中的文件
+            文件操作>删除项目仓库中的文件
         :param project_id: 项目id
         :param file_path: 仓库中的文件相对路径
         :param commit_message: 提交信息
@@ -601,7 +601,7 @@ class GitLabManager:
 
     def get_file_content(self, project_id, file_path, ref="master"):
         """
-            获取项目仓库中指定文件的内容
+            文件操作>获取项目仓库中指定文件的内容
         :param project_id: 项目id
         :param file_path: 仓库中的文件相对路径
         :param ref: 分支
@@ -613,6 +613,9 @@ class GitLabManager:
             
 
     def update_file_content(self, project_id, file_path, new_content, commit_message, branch="master"):
+        """
+            文件操作>更新文件内容
+        """
         project = self.get_project(project_id)
         file = project.files.get(file_path=file_path, ref=branch)
         file.content = new_content
