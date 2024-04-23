@@ -1,4 +1,5 @@
 import gitlab
+# https://python-gitlab.readthedocs.io/en/stable/index.html
 
 """
 认证与连接
@@ -92,16 +93,13 @@ class GitLabManager:
         :param description: 分组描述
         :return:
         """
-        try:
-            group = self.gitlab.groups.create({
-                "name": name,
-                "path": path,
-                "description": description,
-            })
-            return group
-        except gitlab.exceptions.GitlabCreateError as e:
-            print(f"Error creating group: {e}")
-            return None
+        group = self.gitlab.groups.create({
+            "name": name,
+            "path": path,
+            "description": description,
+        })
+        return group
+    
 
     def list_groups(self):
         """
@@ -110,18 +108,16 @@ class GitLabManager:
         """
         return self.gitlab.groups.list(all=True)
 
+    
     def get_group(self, group_id):
         """
             组操作>获取单个组
         :param group_id: 组id
         :return:
         """
-        try:
-            group = self.gitlab.groups.get(group_id)
-            return group
-        except gitlab.exceptions.GitlabGetError as e:
-            print(f"Error getting group details: {e}")
-            return None
+        group = self.gitlab.groups.get(group_id)
+        return group
+        
 
     def update_group(self, group_id, name=None, path=None, description=None):
         """
@@ -133,36 +129,31 @@ class GitLabManager:
         :return:
         """
         group = self.get_group(group_id)
-        if group:
-            try:
-                updated_group = group.edit({
-                    "name": name or group.name,
-                    "path": path or group.path,
-                    "description": description or group.description,
-                })
-                return updated_group is not None
-            except gitlab.exceptions.GitlabUpdateError as e:
-                print(f"Error updating group: {e}")
-                return False
-        else:
-            return False
-    
+        updated_group = group.edit({
+            "name": name or group.name,
+            "path": path or group.path,
+            "description": description or group.description,
+        })
+        return updated_group
+
     def delete_group(self,group_id):
         group = self.get_group(group_id)
-        return group.delete()
+        group.delete()
 
 
-    def create_user(self):
-        user = {
+    def create_user(self,username,email,password):
+        data = {
         'username': username,
         'email': email,
         'password': password,
         'reset_password': False  # Set to True if you want the user to reset password on first login
         }
-        new_user = self.gitlab.users.create(user)
+        user = self.gitlab.users.create(data)
+        return user
 
     def list_users(self):
         users = self.gitlab.users.list(all=True)
+        return users
 
     def get_user_by_id(self, user_id):
         """
@@ -173,7 +164,7 @@ class GitLabManager:
         return self.gitlab.users.get(user_id)
     
     def get_user_by_username(self,username):
-        return self.gitlab.users.get(username)
+        return self.gitlab.users.get_by_username(username)
 
 
     def update_user(self,attributes):
@@ -182,9 +173,13 @@ class GitLabManager:
             setattr(user, attr, value)
         user.save()
 
-    def delete_user(self):
-        pass
+    def delete_user_by_id(self,user_id):
+        user = self.gitlab.users.get(user_id)
+        user.delete()
 
+    def delete_user_by_username(self,username):
+        user= self.gitlab.users.get_by_username(username)
+        user.delete()
 
     def create_group_member(self, group_id, user_id, access_level):
         group = self.get_group(group_id)
@@ -196,8 +191,8 @@ class GitLabManager:
         :param group_id: 组id
         :return:
         """
-        
-        pass
+        group = self.get_group(group_id)
+        return group.members.list(all=True)
 
     def update_group_members(self, group_id, user_id, access_level):
         """
@@ -217,15 +212,19 @@ class GitLabManager:
         return group.members.delete(user_id)
 
 
-    def create_project(self, name, description, visibility="private"):
+    def create_project(self, name, description, visibility="private",group_id=None):
         """
             创建新项目
         :param name: 项目名称
         :param description: 描述
         :param visibility: 可见行 private / public
+        :param group_id: 组id,如果有此参数则是在组内常见项目
         :return:
         """
-        return self.gitlab.projects.create({"name": name, "description": description, "visibility": visibility})
+        data = {"name": name, "description": description, "visibility": visibility}
+        if group_id:
+            data.update({"namespace_id":group_id})
+        return self.gitlab.projects.create(data)
 
 
     def list_projects(self):
@@ -266,6 +265,12 @@ class GitLabManager:
         projects = self.gitlab.projects.list(all=True, order_by='id', sort="asc")
         """
         return self.gitlab.projects.list(owned=True)
+    
+    def list_project_in_group(self,group_id):
+        group = self.get_group(group_id)
+        projects = group.projects.list(all=True)
+        return projects
+        
 
     def get_project(self, project_id):
         """
@@ -276,7 +281,10 @@ class GitLabManager:
         return self.gitlab.projects.get(project_id)
     
     def update_project(self, name, description, visibility="private"):
-        pass
+        project = self.get_project(project_id)
+        for attr, value in new_attributes.items():
+            setattr(project, attr, value)
+        project.save()
 
     def delete_project(self, project_id):
         """
@@ -296,10 +304,8 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            return project.branches.create({"branch": branch_name, "ref": ref})
-        else:
-            return None
+        return project.branches.create({"branch": branch_name, "ref": ref})
+        
 
     def list_branches(self, project_id):
         """
@@ -308,10 +314,8 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            return [branch.name for branch in project.branches.list()]
-        else:
-            return []
+        return [branch.name for branch in project.branches.list()]
+        
 
     def delete_branch(self, project_id, branch_name):
         """
@@ -341,23 +345,17 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            try:
-                project.protectedbranches.create({
-                    "name": branch_name,
-                    "push_access_levels": push_access_levels or [],
-                    "merge_access_levels": merge_access_levels or [],
-                    "unprotect_access_levels": unprotect_access_levels or [],
-                    "code_owner_approval_required": code_owner_approval_required,
-                    "approvals_required": approvals_required,
-                    "approval_rules": approval_rules or [],
-                })
-                return True
-            except gitlab.exceptions.GitlabCreateError as e:
-                print(f"Error protecting branch: {e}")
-                return False
-        else:
-            return False
+        
+        return project.protectedbranches.create({
+            "name": branch_name,
+            "push_access_levels": push_access_levels or [],
+            "merge_access_levels": merge_access_levels or [],
+            "unprotect_access_levels": unprotect_access_levels or [],
+            "code_owner_approval_required": code_owner_approval_required,
+            "approvals_required": approvals_required,
+            "approval_rules": approval_rules or [],
+        })
+                
     
     def get_protected_branch(self, project_id, branch_name):
         """
@@ -367,15 +365,8 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            try:
-                protected_branch = project.protectedbranches.get(branch_name)
-                return protected_branch
-            except gitlab.exceptions.GitlabGetError as e:
-                print(f"Error getting protected branch: {e}")
-                return None
-        else:
-            return None
+        return project.protectedbranches.get(branch_name)
+       
 
     def update_protected_branch(self, project_id, branch_name, push_access_levels=None,
                                 merge_access_levels=None,
@@ -396,22 +387,17 @@ class GitLabManager:
         :return:
         """
         protected_branch = self.get_protected_branch(project_id, branch_name)
-        if protected_branch:
-            try:
-                updated_branch = protected_branch.update({
-                    "push_access_levels": push_access_levels or protected_branch.push_access_levels,
-                    "merge_access_levels": merge_access_levels or protected_branch.merge_access_levels,
-                    "unprotect_access_levels": unprotect_access_levels or protected_branch.unprotect_access_levels,
-                    "code_owner_approval_required": code_owner_approval_required or protected_branch.code_owner_approval_required,
-                    "approvals_required": approvals_required or protected_branch.approvals_required,
-                    "approval_rules": approval_rules or protected_branch.approval_rules,
-                })
-                return updated_branch is not None
-            except gitlab.exceptions.GitlabUpdateError as e:
-                print(f"Error updating protected branch: {e}")
-                return False
-        else:
-            return False
+        
+        return protected_branch.update({
+            "push_access_levels": push_access_levels or protected_branch.push_access_levels,
+            "merge_access_levels": merge_access_levels or protected_branch.merge_access_levels,
+            "unprotect_access_levels": unprotect_access_levels or protected_branch.unprotect_access_levels,
+            "code_owner_approval_required": code_owner_approval_required or protected_branch.code_owner_approval_required,
+            "approvals_required": approvals_required or protected_branch.approvals_required,
+            "approval_rules": approval_rules or protected_branch.approval_rules,
+        })
+            
+        
 
     def delete_protected_branch(self, project_id, branch_name):
         """
@@ -424,8 +410,10 @@ class GitLabManager:
         protected_branch = project.protectedbranches.get(branch_name)
         protected_branch.delete()
     
-    def set_default_branch(self):
-        pass
+    def set_default_branch(self,project_id):
+        project = elf.get_project(project_id)
+        project.default_branch = new_default_branch
+        project.save()
     
     
     def create_merge_request(self, project_id, source_branch, target_branch, title, description=None):
@@ -442,16 +430,14 @@ class GitLabManager:
             获取id,然后再接受合并
         """
         project = self.get_project(project_id)
-        if project:
-            mr_params = {
-                "source_branch": source_branch,
-                "target_branch": target_branch,
-                "title": title,
-                "description": description,
-            }
-            return project.mergerequests.create(mr_params)
-        else:
-            return None
+        data = {
+            "source_branch": source_branch,
+            "target_branch": target_branch,
+            "title": title,
+            "description": description,
+        }
+        return project.mergerequests.create(data)
+      
 
     def list_merge_requests(self, project_id, state="opened"):
         """
@@ -462,13 +448,11 @@ class GitLabManager:
             返回的是对象 iid是项目merge的id
         """
         project = self.get_project(project_id)
-        if project:
-            return project.mergerequests.list(state=state)
-        else:
-            return []
+        return project.mergerequests.list(state=state)
+        
 
 
-    def accept_merge_request(self, project_id, merge_request_id):
+    def accept_merge_request(self, project_id, merge_request_iid):
         """
             接受merge请求
         :param project_id:
@@ -476,13 +460,16 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        merge_request = project.mergerequests.get(merge_request_id)
+        merge_request = project.mergerequests.get(merge_request_iid)
         return merge_request.merge()
 
-    def reject_merge_request(self):
-        pass
+    def reject_merge_request(self,project_id, merge_request_iid):
+        project = self.get_project(project_id)
+        merge_request = project.mergerequests.get(merge_request_iid)
+        merge_request.state_event = 'close'
+        merge_request.save()
 
-    def delete_merge_request(self, project_id, merge_request_id):
+    def delete_merge_request(self, project_id, merge_request_iid):
         """
             删除merge请求
         :param project_id:
@@ -490,7 +477,7 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        return project.mergerequests.delete(merge_request_id)
+        return project.mergerequests.delete(merge_request_iid)
 
      def create_tag(self, project_id, tag_name, ref, message):
         """
@@ -502,11 +489,9 @@ class GitLabManager:
         :return: 对象
         """
         project = self.get_project(project_id)
-        if project:
-            tag_params = {"tag_name": tag_name, "ref": ref, "message": message}
-            return project.tags.create(tag_params)
-        else:
-            return None
+        tag_params = {"tag_name": tag_name, "ref": ref, "message": message}
+        return project.tags.create(tag_params)
+
 
     def list_tags(self, project_id):
         """
@@ -515,10 +500,8 @@ class GitLabManager:
         :return: 对象
         """
         project = self.get_project(project_id)
-        if project:
-            return project.tags.list()
-        else:
-            return []
+        return project.tags.list()
+        
 
     def delete_tag(self, project_id, tag_name):
         """
@@ -542,22 +525,15 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            try:
-                response = project.files.create(
-                    {
-                        "file_path": file_path,
-                        "branch": branch,
-                        "content": content.decode(),
-                        "commit_message": commit_message,
-                    }
-                )
-                return response
-            except gitlab.exceptions.GitlabCreateError as e:
-                print(f"Error uploading file: {e}")
-                return None
-        else:
-            return None
+        response = project.files.create(
+            {
+                "file_path": file_path,
+                "branch": branch,
+                "content": content.decode(),
+                "commit_message": commit_message,
+            }
+        )
+        return response
 
     def download_file(self, project_id, file_path, ref="master"):
         """
@@ -568,15 +544,9 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            try:
-                file_content = project.files.raw(file_path, ref=ref)
-                return file_content.content
-            except gitlab.exceptions.GitlabGetError as e:
-                print(f"Error downloading file: {e}")
-                return None
-        else:
-            return None
+        file_content = project.files.raw(file_path, ref=ref)
+        return file_content.content
+            
 
     def delete_file(self, project_id, file_path, commit_message, branch="master"):
         """
@@ -588,15 +558,8 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            try:
-                project.files.delete(file_path, branch=branch, commit_message=commit_message)
-                return True
-            except gitlab.exceptions.GitlabDeleteError as e:
-                print(f"Error deleting file: {e}")
-                return False
-        else:
-            return False
+        return project.files.delete(file_path, branch=branch, commit_message=commit_message)
+                
 
     def get_file_content(self, project_id, file_path, ref="master"):
         """
@@ -607,18 +570,15 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        if project:
-            try:
-                file_data = project.files.get(file_path, ref=ref)
-                return file_data.decode()
-            except gitlab.exceptions.GitlabGetError as e:
-                print(f"Error getting file content: {e}")
-                return None
-        else:
-            return None
+        file_data = project.files.get(file_path, ref=ref)
+        return file_data.decode()
+            
 
-    def update_file_content(self, project_id, file_path, content, commit_message, branch="master"):
-        pass
+    def update_file_content(self, project_id, file_path, new_content, commit_message, branch="master"):
+        project = self.get_project(project_id)
+        file = project.files.get(file_path=file_path, ref=branch)
+        file.content = new_content
+        file.save(branch=branch_name, commit_message=commit_message)
 
 
 if __name__ == '__main__':
