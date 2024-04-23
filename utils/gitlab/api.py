@@ -121,7 +121,7 @@ class GitLabManager:
 
     def update_group(self, group_id, name=None, path=None, description=None):
         """
-            修改已有组的属性
+            组操作>修改已有组的属性
         :param group_id:
         :param name:
         :param path:
@@ -137,57 +137,30 @@ class GitLabManager:
         return updated_group
 
     def delete_group(self,group_id):
+        """
+            组操作>删除组
+        """
         group = self.get_group(group_id)
         group.delete()
 
-
-    def create_user(self,username,email,password):
-        data = {
-        'username': username,
-        'email': email,
-        'password': password,
-        'reset_password': False  # Set to True if you want the user to reset password on first login
-        }
-        user = self.gitlab.users.create(data)
-        return user
-
-    def list_users(self):
-        users = self.gitlab.users.list(all=True)
-        return users
-
-    def get_user_by_id(self, user_id):
+    def list_project_in_group(self,group_id):
         """
-            获取指定ID用户的详细信息
-        :param user_id: 用户id
-        :return:
+            组操作>列出组内的项目
         """
-        return self.gitlab.users.get(user_id)
-    
-    def get_user_by_username(self,username):
-        return self.gitlab.users.get_by_username(username)
-
-
-    def update_user(self,attributes):
-        user = self.gitlab.users.get(user_id)
-        for attr, value in attributes.items():
-            setattr(user, attr, value)
-        user.save()
-
-    def delete_user_by_id(self,user_id):
-        user = self.gitlab.users.get(user_id)
-        user.delete()
-
-    def delete_user_by_username(self,username):
-        user= self.gitlab.users.get_by_username(username)
-        user.delete()
+        group = self.get_group(group_id)
+        projects = group.projects.list(all=True)
+        return projects
 
     def create_group_member(self, group_id, user_id, access_level):
+        """
+            组操作>创建组成员
+        """
         group = self.get_group(group_id)
         return group.members.create({"user_id": user_id, "access_level": access_level})
 
     def list_group_members(self, group_id):
         """
-            获取指定组的所有成员
+            组操作>列出组内成员
         :param group_id: 组id
         :return:
         """
@@ -196,7 +169,7 @@ class GitLabManager:
 
     def update_group_members(self, group_id, user_id, access_level):
         """
-            管理组成员：添加、移除或更新成员的角色权限
+            组操作>更新组成员：添加、移除或更新成员的角色权限
         :param group_id:
         :param user_id:
         :param access_level:
@@ -208,13 +181,74 @@ class GitLabManager:
                     
            
     def delete_group_member(self, group_id, user_id):
+        """
+            组操作>删除组成员
+        """
         group = self.get_group(group_id)
         return group.members.delete(user_id)
+
+    def create_user(self,username,email,password):
+        """
+            用户操作>创建用户
+        """
+        data = {
+        'username': username,
+        'email': email,
+        'password': password,
+        'reset_password': False  # Set to True if you want the user to reset password on first login
+        }
+        user = self.gitlab.users.create(data)
+        return user
+
+    def list_users(self):
+        """
+            用户操作>列出用户
+        """
+        users = self.gitlab.users.list(all=True)
+        return users
+
+    def get_user_by_id(self, user_id):
+        """
+            用户操作>获取用户的详细信息根据id
+        :param user_id: 用户id
+        :return:
+        """
+        return self.gitlab.users.get(user_id)
+    
+    def get_user_by_username(self,username):
+        """
+            用户操作>获取用户的详细信息根据username
+        """
+        return self.gitlab.users.get_by_username(username)
+
+
+    def update_user(self,attributes):
+        """
+            用户操作>更新用户
+        """
+        user = self.gitlab.users.get(user_id)
+        for attr, value in attributes.items():
+            setattr(user, attr, value)
+        user.save()
+
+    def delete_user_by_id(self,user_id):
+        """
+            用户操作>删除用户根据id
+        """
+        user = self.gitlab.users.get(user_id)
+        user.delete()
+
+    def delete_user_by_username(self,username):
+        """
+            用户操作>删除用户根据username
+        """
+        user= self.gitlab.users.get_by_username(username)
+        user.delete()
 
 
     def create_project(self, name, description, visibility="private",group_id=None):
         """
-            创建新项目
+            项目操作>创建新项目
         :param name: 项目名称
         :param description: 描述
         :param visibility: 可见行 private / public
@@ -229,7 +263,7 @@ class GitLabManager:
 
     def list_projects(self):
         """
-            列出所有可访问的项目
+            项目操作>列出所有可访问的项目
         :return:
         """
         """
@@ -265,22 +299,20 @@ class GitLabManager:
         projects = self.gitlab.projects.list(all=True, order_by='id', sort="asc")
         """
         return self.gitlab.projects.list(owned=True)
-    
-    def list_project_in_group(self,group_id):
-        group = self.get_group(group_id)
-        projects = group.projects.list(all=True)
-        return projects
         
 
     def get_project(self, project_id):
         """
-            通过ID获取项目
+            项目操作>获取项目根据id
         :param project_id: 项目id
         :return:
         """
         return self.gitlab.projects.get(project_id)
     
     def update_project(self, name, description, visibility="private"):
+        """
+            项目操作>更新项目
+        """
         project = self.get_project(project_id)
         for attr, value in new_attributes.items():
             setattr(project, attr, value)
@@ -288,7 +320,7 @@ class GitLabManager:
 
     def delete_project(self, project_id):
         """
-            删除项目
+            项目操作>删除项目
         :param project_id: 项目id
         :return:
         """
@@ -297,7 +329,7 @@ class GitLabManager:
 
     def create_branch(self, project_id, branch_name, ref):
         """
-            在指定项目中创建新分支
+            分支操作>创建新分支
         :param project_id: 项目id
         :param branch_name: 项目名称
         :param ref: 参考那个分支
@@ -309,7 +341,7 @@ class GitLabManager:
 
     def list_branches(self, project_id):
         """
-            列出指定项目的所有分支
+            分支操作>列出项目的所有分支
         :param project_id: 项目id
         :return:
         """
@@ -319,7 +351,7 @@ class GitLabManager:
 
     def delete_branch(self, project_id, branch_name):
         """
-            删除分支
+            分支操作>删除分支
         :param project_id:
         :param branch_name:
         :return:
@@ -333,7 +365,7 @@ class GitLabManager:
                        unprotect_access_levels=None, code_owner_approval_required=False,
                        approvals_required=None, approval_rules=None):
         """
-            为项目中的分支设置保护规则
+            分支操作>为项目中的分支设置保护规则
         :param project_id:
         :param branch_name:
         :param push_access_levels:
@@ -359,7 +391,7 @@ class GitLabManager:
     
     def get_protected_branch(self, project_id, branch_name):
         """
-            获取指定分支的保护规则
+            分支操作>获取指定分支的保护规则
         :param project_id:
         :param branch_name:
         :return:
@@ -375,7 +407,7 @@ class GitLabManager:
                                 approvals_required=None,
                                 approval_rules=None):
         """
-            修改已有分支的保护规则
+            分支操作>修改已有分支的保护规则
         :param project_id:
         :param branch_name:
         :param push_access_levels:
@@ -401,7 +433,7 @@ class GitLabManager:
 
     def delete_protected_branch(self, project_id, branch_name):
         """
-            把保护分支删除
+            分支操作>把保护分支删除
         :param project_id:
         :param branch_name:
         :return:
@@ -411,6 +443,9 @@ class GitLabManager:
         protected_branch.delete()
     
     def set_default_branch(self,project_id):
+        """
+            分支操作>设置默认分支
+        """
         project = elf.get_project(project_id)
         project.default_branch = new_default_branch
         project.save()
@@ -418,7 +453,7 @@ class GitLabManager:
     
     def create_merge_request(self, project_id, source_branch, target_branch, title, description=None):
         """
-            在指定项目中创建新的合并请求,这里存在失败的可能,需要特殊处理
+            合并请求操作>在指定项目中创建新的合并请求,这里存在失败的可能,需要特殊处理
         :param project_id: 项目id
         :param source_branch: 源分支
         :param target_branch: 目的分支
@@ -441,7 +476,7 @@ class GitLabManager:
 
     def list_merge_requests(self, project_id, state="opened"):
         """
-            列出指定项目中处于特定状态（默认为打开状态）的合并请求
+            合并请求操作>列出指定项目中处于特定状态（默认为打开状态）的合并请求
         :param project_id: 项目id
         :param state:
         :return:
@@ -454,7 +489,7 @@ class GitLabManager:
 
     def accept_merge_request(self, project_id, merge_request_iid):
         """
-            接受merge请求
+            合并请求操作>接受merge请求
         :param project_id:
         :param merge_request_id:
         :return:
@@ -464,6 +499,9 @@ class GitLabManager:
         return merge_request.merge()
 
     def reject_merge_request(self,project_id, merge_request_iid):
+        """
+            合并请求操作>
+        """
         project = self.get_project(project_id)
         merge_request = project.mergerequests.get(merge_request_iid)
         merge_request.state_event = 'close'
