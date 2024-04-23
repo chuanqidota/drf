@@ -153,21 +153,34 @@ class GitLabManager:
 
 
     def create_user(self):
-        pass
+        user = {
+        'username': username,
+        'email': email,
+        'password': password,
+        'reset_password': False  # Set to True if you want the user to reset password on first login
+        }
+        new_user = self.gitlab.users.create(user)
 
     def list_users(self):
-        pass
+        users = self.gitlab.users.list(all=True)
 
-    def get_user(self, user_id):
+    def get_user_by_id(self, user_id):
         """
             获取指定ID用户的详细信息
         :param user_id: 用户id
         :return:
         """
         return self.gitlab.users.get(user_id)
+    
+    def get_user_by_username(self,username):
+        return self.gitlab.users.get(username)
 
-    def update_user(self):
-        pass
+
+    def update_user(self,attributes):
+        user = self.gitlab.users.get(user_id)
+        for attr, value in attributes.items():
+            setattr(user, attr, value)
+        user.save()
 
     def delete_user(self):
         pass
