@@ -68,6 +68,12 @@ import gitlab
 
 
 class GitLabManager:
+    GuestAccessLevel = 10
+    ReporterAccessLevel = 20
+    DeveloperAccessLevel = 30
+    MaintainerAccessLevel = 40
+    OwnerAccessLevel = 50
+
     def __init__(self, url, private_token):
         """
             初始化
@@ -88,7 +94,7 @@ class GitLabManager:
 
     def create_group(self, name, path, description=None):
         """
-            组操作>创建分组
+            组操作>创建分组-权限可能会被拒
         :param name: 分组的名称可以和path一致
         :param path: 路径
         :param description: 分组描述
@@ -104,7 +110,7 @@ class GitLabManager:
     def list_groups(self):
         """
             组操作>获取组列表
-        :return:
+        :return: [<Group id:86096102 name:test>]
         """
         return self.gitlab.groups.list(all=True)
 
@@ -113,26 +119,27 @@ class GitLabManager:
             组操作>获取单个组
         :param group_id: 组id
         :return:
+        <class 'gitlab.v4.objects.groups.Group'> => {'id': 86096102, 'web_url': 'https://gitlab.com/groups/test804017', 'name': 'test', 'path': 'test804017', 'description': '', 'visibility': 'private', 'share_with_group_lock': False, 'require_two_factor_authentication': False, 'two_factor_grace_period': 48, 'project_creation_level': 'developer', 'auto_devops_enabled': None, 'subgroup_creation_level': 'maintainer', 'emails_disabled': False, 'emails_enabled': True, 'mentions_disabled': None, 'lfs_enabled': True, 'math_rendering_limits_enabled': True, 'lock_math_rendering_limits_enabled': False, 'default_branch': None, 'default_branch_protection': 2, 'default_branch_protection_defaults': {'allowed_to_push': [{'access_level': 40}], 'allow_force_push': False, 'allowed_to_merge': [{'access_level': 40}]}, 'avatar_url': None, 'request_access_enabled': True, 'full_name': 'test', 'full_path': 'test804017', 'created_at': '2024-04-22T09:40:13.292Z', 'parent_id': None, 'organization_id': 1, 'shared_runners_setting': 'enabled', 'ldap_cn': None, 'ldap_access': None, 'wiki_access_level': 'enabled', 'shared_with_groups': [], 'runners_token': 'GR1348941BgEJpSXEtoVXSXikUpsy', 'enabled_git_access_protocol': 'all', 'prevent_sharing_groups_outside_hierarchy': False, 'projects': [], 'shared_projects': [], 'shared_runners_minutes_limit': None, 'extra_shared_runners_minutes_limit': None, 'prevent_forking_outside_group': None, 'membership_lock': False}
         """
         group = self.gitlab.groups.get(group_id)
         return group
 
-    def update_group(self, group_id, name=None, path=None, description=None):
+    def update_group(self, group_id, name=None, path=None, description=None, visibility="private"):
         """
             组操作>修改已有组的属性
-        :param group_id:
-        :param name:
-        :param path:
-        :param description:
-        :return:
+        :param group_id: 组id
+        :param name: 名称
+        :param path: path
+        :param description: 描述
+        :param visibility: 可见 private, public
+        :return: None
         """
         group = self.get_group(group_id)
-        updated_group = group.edit({
-            "name": name or group.name,
-            "path": path or group.path,
-            "description": description or group.description,
-        })
-        return updated_group
+        group.name = name or group.name
+        group.path = path or group.path
+        group.description = description or group.description
+        group.visibility = visibility or group.visibility
+        group.save()
 
     def delete_group(self, group_id):
         """
@@ -142,16 +149,6 @@ class GitLabManager:
         """
         group = self.get_group(group_id)
         group.delete()
-
-    def list_project_in_group(self, group_id):
-        """
-            组操作>列出组内的项目
-        :param group_id: 组id
-        :return:
-        """
-        group = self.get_group(group_id)
-        projects = group.projects.list(all=True)
-        return projects
 
     def create_group_member(self, group_id, user_id, access_level):
         """
@@ -164,18 +161,29 @@ class GitLabManager:
         group = self.get_group(group_id)
         return group.members.create({"user_id": user_id, "access_level": access_level})
 
+    def list_projects_in_group(self, group_id):
+        """
+            组操作>列出组内的项目
+        :param group_id: 组id
+        :return:
+        """
+        group = self.get_group(group_id)
+        projects = group.projects.list(all=True)
+        return projects
+
     def list_group_members(self, group_id):
         """
             组操作>列出组内成员
         :param group_id: 组id
         :return:
+        [<GroupMember id:8730526 username:chuanqidota>]
         """
         group = self.get_group(group_id)
         return group.members.list(all=True)
 
     def update_group_members(self, group_id, user_id, access_level):
         """
-            组操作>更新组成员：添加、移除或更新成员的角色权限
+            组操作>更新组成员：添加、移除或更新成员的角色权限>权限可能被拒
         :param group_id: 组id
         :param user_id: 用户id
         :param access_level: 权限级别
@@ -186,7 +194,7 @@ class GitLabManager:
 
     def delete_group_member(self, group_id, user_id):
         """
-            组操作>删除组成员
+            组操作>删除组成员-权限可能被拒绝
         :param group_id: 组id
         :param user_id: 用户id
         :return:
@@ -194,15 +202,17 @@ class GitLabManager:
         group = self.get_group(group_id)
         return group.members.delete(user_id)
 
-    def create_user(self, username, email, password):
+    def create_user(self, name, username, email, password):
         """
-            用户操作>创建用户
+            用户操作>创建用户-权限可能会被拒绝
+        :param name: 名称
         :param username: 用户名
         :param email: 邮箱
         :param password: 密码
         :return:
         """
         data = {
+            'name': name,
             'username': username,
             'email': email,
             'password': password,
@@ -224,6 +234,7 @@ class GitLabManager:
             用户操作>获取用户的详细信息根据id
         :param user_id: 用户id
         :return:
+        <class 'gitlab.v4.objects.users.User'> => {'id': 8730526, 'username': 'chuanqidota', 'name': 'chuanqidota', 'state': 'active', 'locked': False, 'avatar_url': 'https://secure.gravatar.com/avatar/d426a4bc823547a2902452c9c4906d39bb79fffae818ea89c5bcdddb12bb7ffc?s=80&d=identicon', 'web_url': 'https://gitlab.com/chuanqidota', 'created_at': '2021-04-22T01:37:59.495Z', 'bio': '', 'location': '', 'public_email': '', 'skype': '', 'linkedin': '', 'twitter': '', 'discord': '', 'website_url': '', 'organization': '', 'job_title': '', 'pronouns': '', 'bot': False, 'work_information': None, 'local_time': '12:48 PM'}
         """
         return self.gitlab.users.get(user_id)
 
@@ -232,8 +243,14 @@ class GitLabManager:
             用户操作>获取用户的详细信息根据username
         :param username: 用户名
         :return:
-        """
         return self.gitlab.users.get_by_username(username)
+        """
+        users = self.gitlab.users.list(all=True, search=username)
+        matching_users = [user for user in users if user.username == username]
+        if matching_users:
+            return matching_users[0]
+        else:
+            raise ValueError(f"No user found with username '{username}'")
 
     def update_user(self, user_id, attributes):
         """
@@ -262,8 +279,12 @@ class GitLabManager:
         :param username: 用户名
         :return:
         """
-        user = self.gitlab.users.get_by_username(username)
-        user.delete()
+        users = self.gitlab.users.list(all=True, search=username)
+        matching_users = [user for user in users if user.username == username]
+        if matching_users:
+            return matching_users[0].delete()
+        else:
+            raise ValueError(f"No user found with username '{username}'")
 
     def create_project(self, name, description, visibility="private", group_id=None):
         """
@@ -273,6 +294,7 @@ class GitLabManager:
         :param visibility: 可见行 private / public
         :param group_id: 组id,如果有此参数则是在组内常见项目
         :return:
+        <class 'gitlab.v4.objects.projects.Project'> => {'id': 57183172, 'description': 'test_project', 'name': 'test_project', 'name_with_namespace': 'test / test_project', 'path': 'test_project', 'path_with_namespace': 'test4693117/test_project', 'created_at': '2024-04-23T12:35:01.916Z', 'default_branch': 'main', 'tag_list': [], 'topics': [], 'ssh_url_to_repo': 'git@gitlab.com:test4693117/test_project.git', 'http_url_to_repo': 'https://gitlab.com/test4693117/test_project.git', 'web_url': 'https://gitlab.com/test4693117/test_project', 'readme_url': None, 'forks_count': 0, 'avatar_url': None, 'star_count': 0, 'last_activity_at': '2024-04-23T12:35:01.841Z', 'namespace': {'id': 86176660, 'name': 'test', 'path': 'test4693117', 'kind': 'group', 'full_path': 'test4693117', 'parent_id': None, 'avatar_url': None, 'web_url': 'https://gitlab.com/groups/test4693117'}, 'container_registry_image_prefix': 'registry.gitlab.com/test4693117/test_project', '_links': {'self': 'https://gitlab.com/api/v4/projects/57183172', 'issues': 'https://gitlab.com/api/v4/projects/57183172/issues', 'merge_requests': 'https://gitlab.com/api/v4/projects/57183172/merge_requests', 'repo_branches': 'https://gitlab.com/api/v4/projects/57183172/repository/branches', 'labels': 'https://gitlab.com/api/v4/projects/57183172/labels', 'events': 'https://gitlab.com/api/v4/projects/57183172/events', 'members': 'https://gitlab.com/api/v4/projects/57183172/members', 'cluster_agents': 'https://gitlab.com/api/v4/projects/57183172/cluster_agents'}, 'packages_enabled': True, 'empty_repo': True, 'archived': False, 'visibility': 'private', 'resolve_outdated_diff_discussions': False, 'container_expiration_policy': {'cadence': '1d', 'enabled': False, 'keep_n': 10, 'older_than': '90d', 'name_regex': '.*', 'name_regex_keep': None, 'next_run_at': '2024-04-24T12:35:01.953Z'}, 'repository_object_format': 'sha1', 'issues_enabled': True, 'merge_requests_enabled': True, 'wiki_enabled': True, 'jobs_enabled': True, 'snippets_enabled': True, 'container_registry_enabled': True, 'service_desk_enabled': True, 'service_desk_address': 'contact-project+test4693117-test-project-57183172-issue-@incoming.gitlab.com', 'can_create_merge_request_in': True, 'issues_access_level': 'enabled', 'repository_access_level': 'enabled', 'merge_requests_access_level': 'enabled', 'forking_access_level': 'enabled', 'wiki_access_level': 'enabled', 'builds_access_level': 'enabled', 'snippets_access_level': 'enabled', 'pages_access_level': 'private', 'analytics_access_level': 'enabled', 'container_registry_access_level': 'enabled', 'security_and_compliance_access_level': 'private', 'releases_access_level': 'enabled', 'environments_access_level': 'enabled', 'feature_flags_access_level': 'enabled', 'infrastructure_access_level': 'enabled', 'monitor_access_level': 'enabled', 'model_experiments_access_level': 'enabled', 'model_registry_access_level': 'enabled', 'emails_disabled': False, 'emails_enabled': True, 'shared_runners_enabled': True, 'lfs_enabled': True, 'creator_id': 8730526, 'import_url': None, 'import_type': None, 'import_status': 'none', 'import_error': None, 'open_issues_count': 0, 'description_html': '<p data-sourcepos="1:1-1:12" dir="auto">test_project</p>', 'updated_at': '2024-04-23T12:35:01.916Z', 'ci_default_git_depth': 20, 'ci_forward_deployment_enabled': True, 'ci_forward_deployment_rollback_allowed': True, 'ci_job_token_scope_enabled': False, 'ci_separated_caches': True, 'ci_allow_fork_pipelines_to_run_in_parent_project': True, 'build_git_strategy': 'fetch', 'keep_latest_artifact': True, 'restrict_user_defined_variables': False, 'runners_token': 'GR1348941oWBi7bJ3i-zLCrYfnZY6', 'runner_token_expiration_interval': None, 'group_runners_enabled': True, 'auto_cancel_pending_pipelines': 'enabled', 'build_timeout': 3600, 'auto_devops_enabled': False, 'auto_devops_deploy_strategy': 'continuous', 'ci_config_path': '', 'public_jobs': True, 'shared_with_groups': [], 'only_allow_merge_if_pipeline_succeeds': False, 'allow_merge_on_skipped_pipeline': None, 'request_access_enabled': True, 'only_allow_merge_if_all_discussions_are_resolved': False, 'remove_source_branch_after_merge': True, 'printing_merge_request_link_enabled': True, 'merge_method': 'merge', 'squash_option': 'default_off', 'enforce_auth_checks_on_uploads': True, 'suggestion_commit_message': None, 'merge_commit_template': None, 'squash_commit_template': None, 'issue_branch_template': None, 'warn_about_potentially_unwanted_characters': True, 'autoclose_referenced_issues': True, 'external_authorization_classification_label': '', 'requirements_enabled': False, 'requirements_access_level': 'enabled', 'security_and_compliance_enabled': True, 'compliance_frameworks': []}
         """
         data = {"name": name, "description": description, "visibility": visibility}
         if group_id:
@@ -645,54 +667,61 @@ if __name__ == '__main__':
     YOUR_PRIVATE_TOKEN = "glpat-6Ua4cvm5QizX1Zv1xgc8"
 
     manager = GitLabManager(YOUR_GITLAB_URL, YOUR_PRIVATE_TOKEN)
-    # print(manager.list_projects()[0].id)
-    # print(manager.create_project("api-project", "api-description"))
-    _project_id = 57091227
-    # print(manager.get_project(_project_id))
-    # print(manager.list_branches(_project_id))
 
-    # 上传文件
-    # _file_path = os.path.join(os.getcwd(), "REDME.md")
-    # with open(_file_path, "rb") as f:
-    #     _content = f.read()
-    # manager.upload_file(_project_id, "./REDME.md", _content, "init")
+    # 组操作>创建分组
+    # group = manager.create_group("test_group", "test_group","group-desc")
+    # print(group)
 
-    # 列出项目分支
-    # print(manager.list_branches(_project_id))
+    # 组操作>获取组列表
+    # groups = manager.list_groups()
+    # print(groups)
 
-    # 创建分支
-    # print(manager.create_branch(_project_id, "dev", "master"))
+    # 组操作>获取单个组
+    # group = manager.get_group(86096102)
+    # print(group)
 
-    # 创建合并请求
-    # print(manager.create_merge_request(_project_id,"dev","master","title-test","description-test"))
+    # 组操作>修改已有组的属性
+    # updated_group = manager.update_group(86096102, "test2", "test8040171111111", "desc-fix")
+    # print(updated_group)
 
-    # 获取merge请求列表
-    # print(manager.list_merge_requests(_project_id)[0].iid)
-    # print(dir(manager.list_merge_requests(_project_id)[0]))
+    # 组操作>删除组
+    # manager.delete_group(86096102)
 
-    # 接受合并请求
-    # print(manager.accept_merge_request(_project_id,1,"accept-msg"))
+    # 组操作>列出组内的项目
+    # projects = manager.list_projects_in_group(86176660)
+    # print(projects)
 
-    # 删除合并请求
-    # print(manager.delete_merge_request(_project_id,1))
+    # 项目操作>创建新项目
+    # project = manager.create_project("test_project", "test_project", "private",86176660)
+    # print(project)
 
-    # 创建tag
-    # print(manager.create_tag(_project_id,"tag11","master","tag-desc"))
+    # 用户操作>创建用户
+    # user = manager.create_user("测试", "test_user", "test_user@qq.com", "test_user")
+    # print(user)
 
-    # 列举出tag
-    # print(manager.list_tags(_project_id))
+    # 组操作>创建组成员
+    # member = manager.create_group_member(86176660, 1, 50)
+    # print(member)
 
-    # 删除tag
-    # print(manager.delete_tag(_project_id,"tag11"))
+    # 组操作>列出组内成员
+    # members = manager.list_group_members(86176660)
+    # print(members)
 
-    # 创建组
-    # print(manager.create_group("组1","abc","组描述"))
+    # 组操作>更新组成员：添加、移除或更新成员的角色权限
+    # member = manager.update_group_members(86176660, 8730526, manager.OwnerAccessLevel)
+    # print(member)
 
-    # 创建保护分支
-    # print(manager.protect_branch(_project_id,"dev"))
+    # 组操作>删除组成员
+    # print(manager.delete_group_member(86176660, 8730526))
 
-    # 删除保护分支
-    # print(manager.delete_protected_branch(_project_id,"dev"))
+    #  用户操作>列出用户
+    # users = manager.list_users()
+    # print(users)
 
-    # 删除分支
-    # print(manager.delete_branch(_project_id,"dev"))
+    # 用户操作>获取用户的详细信息根据id
+    # user = manager.get_user_by_id(8730526)
+    # print(user)
+
+    # 用户操作>获取用户的详细信息根据username
+    # user = manager.get_user_by_username("chuanqidota")
+    # print(user)
