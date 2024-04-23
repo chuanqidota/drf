@@ -1,4 +1,5 @@
 import gitlab
+
 # https://python-gitlab.readthedocs.io/en/stable/index.html
 
 """
@@ -99,7 +100,6 @@ class GitLabManager:
             "description": description,
         })
         return group
-    
 
     def list_groups(self):
         """
@@ -108,7 +108,6 @@ class GitLabManager:
         """
         return self.gitlab.groups.list(all=True)
 
-    
     def get_group(self, group_id):
         """
             组操作>获取单个组
@@ -117,7 +116,6 @@ class GitLabManager:
         """
         group = self.gitlab.groups.get(group_id)
         return group
-        
 
     def update_group(self, group_id, name=None, path=None, description=None):
         """
@@ -136,16 +134,20 @@ class GitLabManager:
         })
         return updated_group
 
-    def delete_group(self,group_id):
+    def delete_group(self, group_id):
         """
             组操作>删除组
+        :param group_id: 组id
+        :return:
         """
         group = self.get_group(group_id)
         group.delete()
 
-    def list_project_in_group(self,group_id):
+    def list_project_in_group(self, group_id):
         """
             组操作>列出组内的项目
+        :param group_id: 组id
+        :return:
         """
         group = self.get_group(group_id)
         projects = group.projects.list(all=True)
@@ -154,6 +156,10 @@ class GitLabManager:
     def create_group_member(self, group_id, user_id, access_level):
         """
             组操作>创建组成员
+        :param group_id: 组id
+        :param user_id: 用户id
+        :param access_level: 权限级别
+        :return:
         """
         group = self.get_group(group_id)
         return group.members.create({"user_id": user_id, "access_level": access_level})
@@ -170,32 +176,37 @@ class GitLabManager:
     def update_group_members(self, group_id, user_id, access_level):
         """
             组操作>更新组成员：添加、移除或更新成员的角色权限
-        :param group_id:
-        :param user_id:
-        :param access_level:
-        :param action:
+        :param group_id: 组id
+        :param user_id: 用户id
+        :param access_level: 权限级别
         :return:
         """
         group = self.get_group(group_id)
         return group.members.update(user_id, {"access_level": access_level})
-                    
-           
+
     def delete_group_member(self, group_id, user_id):
         """
             组操作>删除组成员
+        :param group_id: 组id
+        :param user_id: 用户id
+        :return:
         """
         group = self.get_group(group_id)
         return group.members.delete(user_id)
 
-    def create_user(self,username,email,password):
+    def create_user(self, username, email, password):
         """
             用户操作>创建用户
+        :param username: 用户名
+        :param email: 邮箱
+        :param password: 密码
+        :return:
         """
         data = {
-        'username': username,
-        'email': email,
-        'password': password,
-        'reset_password': False  # Set to True if you want the user to reset password on first login
+            'username': username,
+            'email': email,
+            'password': password,
+            'reset_password': False  # Set to True if you want the user to reset password on first login
         }
         user = self.gitlab.users.create(data)
         return user
@@ -203,6 +214,7 @@ class GitLabManager:
     def list_users(self):
         """
             用户操作>列出用户
+        :return:
         """
         users = self.gitlab.users.list(all=True)
         return users
@@ -214,39 +226,46 @@ class GitLabManager:
         :return:
         """
         return self.gitlab.users.get(user_id)
-    
-    def get_user_by_username(self,username):
+
+    def get_user_by_username(self, username):
         """
             用户操作>获取用户的详细信息根据username
+        :param username: 用户名
+        :return:
         """
         return self.gitlab.users.get_by_username(username)
 
-
-    def update_user(self,attributes):
+    def update_user(self, user_id, attributes):
         """
             用户操作>更新用户
+        :param user_id: 用户id
+        :param attributes: 属性
+        :return:
         """
         user = self.gitlab.users.get(user_id)
         for attr, value in attributes.items():
             setattr(user, attr, value)
         user.save()
 
-    def delete_user_by_id(self,user_id):
+    def delete_user_by_id(self, user_id):
         """
             用户操作>删除用户根据id
+        :param user_id: 用户id
+        :return:
         """
         user = self.gitlab.users.get(user_id)
         user.delete()
 
-    def delete_user_by_username(self,username):
+    def delete_user_by_username(self, username):
         """
             用户操作>删除用户根据username
+        :param username: 用户名
+        :return:
         """
-        user= self.gitlab.users.get_by_username(username)
+        user = self.gitlab.users.get_by_username(username)
         user.delete()
 
-
-    def create_project(self, name, description, visibility="private",group_id=None):
+    def create_project(self, name, description, visibility="private", group_id=None):
         """
             项目操作>创建新项目
         :param name: 项目名称
@@ -257,9 +276,8 @@ class GitLabManager:
         """
         data = {"name": name, "description": description, "visibility": visibility}
         if group_id:
-            data.update({"namespace_id":group_id})
+            data.update({"namespace_id": group_id})
         return self.gitlab.projects.create(data)
-
 
     def list_projects(self):
         """
@@ -299,7 +317,6 @@ class GitLabManager:
         projects = self.gitlab.projects.list(all=True, order_by='id', sort="asc")
         """
         return self.gitlab.projects.list(owned=True)
-        
 
     def get_project(self, project_id):
         """
@@ -308,13 +325,16 @@ class GitLabManager:
         :return:
         """
         return self.gitlab.projects.get(project_id)
-    
-    def update_project(self, name, description, visibility="private"):
+
+    def update_project(self, project_id, attributes):
         """
             项目操作>更新项目
+        :param project_id: 用户id
+        :param attributes: 属性
+        :return:
         """
         project = self.get_project(project_id)
-        for attr, value in new_attributes.items():
+        for attr, value in attributes.items():
             setattr(project, attr, value)
         project.save()
 
@@ -337,7 +357,6 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         return project.branches.create({"branch": branch_name, "ref": ref})
-        
 
     def list_branches(self, project_id):
         """
@@ -347,23 +366,22 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         return [branch.name for branch in project.branches.list()]
-        
 
     def delete_branch(self, project_id, branch_name):
         """
             分支操作>删除分支
-        :param project_id:
-        :param branch_name:
+        :param project_id: 项目id
+        :param branch_name: 分支名称
         :return:
         """
         project = self.get_project(project_id)
         project.branches.delete(branch_name)
 
     def create_protect_branch(self, project_id, branch_name,
-                       push_access_levels=None,
-                       merge_access_levels=None,
-                       unprotect_access_levels=None, code_owner_approval_required=False,
-                       approvals_required=None, approval_rules=None):
+                              push_access_levels=None,
+                              merge_access_levels=None,
+                              unprotect_access_levels=None, code_owner_approval_required=False,
+                              approvals_required=None, approval_rules=None):
         """
             分支操作>为项目中的分支设置保护规则
         :param project_id:
@@ -377,7 +395,7 @@ class GitLabManager:
         :return:
         """
         project = self.get_project(project_id)
-        
+
         return project.protectedbranches.create({
             "name": branch_name,
             "push_access_levels": push_access_levels or [],
@@ -387,8 +405,7 @@ class GitLabManager:
             "approvals_required": approvals_required,
             "approval_rules": approval_rules or [],
         })
-                
-    
+
     def get_protected_branch(self, project_id, branch_name):
         """
             分支操作>获取指定分支的保护规则
@@ -398,7 +415,6 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         return project.protectedbranches.get(branch_name)
-       
 
     def update_protected_branch(self, project_id, branch_name, push_access_levels=None,
                                 merge_access_levels=None,
@@ -419,7 +435,7 @@ class GitLabManager:
         :return:
         """
         protected_branch = self.get_protected_branch(project_id, branch_name)
-        
+
         return protected_branch.update({
             "push_access_levels": push_access_levels or protected_branch.push_access_levels,
             "merge_access_levels": merge_access_levels or protected_branch.merge_access_levels,
@@ -428,29 +444,29 @@ class GitLabManager:
             "approvals_required": approvals_required or protected_branch.approvals_required,
             "approval_rules": approval_rules or protected_branch.approval_rules,
         })
-            
-        
 
     def delete_protected_branch(self, project_id, branch_name):
         """
             分支操作>把保护分支删除
-        :param project_id:
-        :param branch_name:
+        :param project_id: 项目id
+        :param branch_name: 分支名称
         :return:
         """
         project = self.get_project(project_id)
         protected_branch = project.protectedbranches.get(branch_name)
         protected_branch.delete()
-    
-    def set_default_branch(self,project_id):
+
+    def set_default_branch(self, project_id, branch_name):
         """
             分支操作>设置默认分支
+        :param project_id: 项目id
+        :param branch_name: 默认分支
+        :return:
         """
-        project = elf.get_project(project_id)
-        project.default_branch = new_default_branch
+        project = self.get_project(project_id)
+        project.default_branch = branch_name
         project.save()
-    
-    
+
     def create_merge_request(self, project_id, source_branch, target_branch, title, description=None):
         """
             合并请求操作>在指定项目中创建新的合并请求,这里存在失败的可能,需要特殊处理
@@ -472,7 +488,6 @@ class GitLabManager:
             "description": description,
         }
         return project.mergerequests.create(data)
-      
 
     def list_merge_requests(self, project_id, state="opened"):
         """
@@ -484,23 +499,24 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         return project.mergerequests.list(state=state)
-        
-
 
     def accept_merge_request(self, project_id, merge_request_iid):
         """
             合并请求操作>接受merge请求
-        :param project_id:
-        :param merge_request_id:
+        :param project_id: 项目id
+        :param merge_request_iid: 合并请求iid
         :return:
         """
         project = self.get_project(project_id)
         merge_request = project.mergerequests.get(merge_request_iid)
         return merge_request.merge()
 
-    def reject_merge_request(self,project_id, merge_request_iid):
+    def reject_merge_request(self, project_id, merge_request_iid):
         """
             合并请求操作>拒绝合并请求
+        :param project_id: 项目id
+        :param merge_request_iid: 合并请求iid
+        :return:
         """
         project = self.get_project(project_id)
         merge_request = project.mergerequests.get(merge_request_iid)
@@ -510,14 +526,14 @@ class GitLabManager:
     def delete_merge_request(self, project_id, merge_request_iid):
         """
             合并请求操作>删除merge请求
-        :param project_id:
-        :param merge_request_id:
+        :param project_id: 项目id
+        :param merge_request_iid: 合并请求iid
         :return:
         """
         project = self.get_project(project_id)
         return project.mergerequests.delete(merge_request_iid)
 
-     def create_tag(self, project_id, tag_name, ref, message):
+    def create_tag(self, project_id, tag_name, ref, message):
         """
             标签操作>在指定项目中创建新标签
         :param project_id: 项目标签
@@ -530,7 +546,6 @@ class GitLabManager:
         tag_params = {"tag_name": tag_name, "ref": ref, "message": message}
         return project.tags.create(tag_params)
 
-
     def list_tags(self, project_id):
         """
             标签操作>列出指定项目的所有标签
@@ -539,13 +554,12 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         return project.tags.list()
-        
 
     def delete_tag(self, project_id, tag_name):
         """
             标签操作>删除tag
-        :param project_id:
-        :param tag_name:
+        :param project_id: 项目id
+        :param tag_name: 标签名称
         :return:
         """
         project = self.get_project(project_id)
@@ -584,7 +598,6 @@ class GitLabManager:
         project = self.get_project(project_id)
         file_content = project.files.raw(file_path, ref=ref)
         return file_content.content
-            
 
     def delete_file(self, project_id, file_path, commit_message, branch="master"):
         """
@@ -597,7 +610,6 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         return project.files.delete(file_path, branch=branch, commit_message=commit_message)
-                
 
     def get_file_content(self, project_id, file_path, ref="master"):
         """
@@ -610,16 +622,21 @@ class GitLabManager:
         project = self.get_project(project_id)
         file_data = project.files.get(file_path, ref=ref)
         return file_data.decode()
-            
 
     def update_file_content(self, project_id, file_path, new_content, commit_message, branch="master"):
         """
             文件操作>更新文件内容
+        :param project_id: 项目id
+        :param file_path: 文件路径
+        :param new_content: 新内容
+        :param commit_message: 提交信息
+        :param branch: 分支
+        :return:
         """
         project = self.get_project(project_id)
         file = project.files.get(file_path=file_path, ref=branch)
         file.content = new_content
-        file.save(branch=branch_name, commit_message=commit_message)
+        file.save(branch=branch, commit_message=commit_message)
 
 
 if __name__ == '__main__':
