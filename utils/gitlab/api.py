@@ -132,7 +132,7 @@ class GitLabManager:
         :param description:
         :return:
         """
-        group = self.get_group_details(group_id)
+        group = self.get_group(group_id)
         if group:
             try:
                 updated_group = group.edit({
@@ -146,8 +146,47 @@ class GitLabManager:
                 return False
         else:
             return False
+    
+    def delete_group(self,group_id):
+        group = self.get_group(group_id)
+        return group.delete()
 
-    def manage_group_members(self, group_id, user_id, access_level, action):
+
+    def create_user(self):
+        pass
+
+    def list_users(self):
+        pass
+
+    def get_user(self, user_id):
+        """
+            获取指定ID用户的详细信息
+        :param user_id: 用户id
+        :return:
+        """
+        return self.gitlab.users.get(user_id)
+
+    def update_user(self):
+        pass
+
+    def delete_user(self):
+        pass
+
+
+    def create_group_member(self, group_id, user_id, access_level):
+        group = self.get_group(group_id)
+        return group.members.create({"user_id": user_id, "access_level": access_level})
+
+    def list_group_members(self, group_id):
+        """
+            获取指定组的所有成员
+        :param group_id: 组id
+        :return:
+        """
+        
+        pass
+
+    def update_group_members(self, group_id, user_id, access_level):
         """
             管理组成员：添加、移除或更新成员的角色权限
         :param group_id:
@@ -156,75 +195,14 @@ class GitLabManager:
         :param action:
         :return:
         """
-        group = self.retrieve_group(group_id)
-        if group:
-            if action == "add":
-                try:
-                    group.members.create({"user_id": user_id, "access_level": access_level})
-                    print(f"User {user_id} added to group {group_id} with access level {access_level}.")
-                except gitlab.exceptions.GitlabCreateError as e:
-                    print(f"Error adding member: {e}")
-            elif action == "remove":
-                try:
-                    group.members.delete(user_id)
-                    print(f"User {user_id} removed from group {group_id}.")
-                except gitlab.exceptions.GitlabDeleteError as e:
-                    print(f"Error removing member: {e}")
-            elif action == "update":
-                try:
-                    group.members.update(user_id, {"access_level": access_level})
-                    print(f"Access level for user {user_id} in group {group_id} updated to {access_level}.")
-                except gitlab.exceptions.GitlabUpdateError as e:
-                    print(f"Error updating member access level: {e}")
-            else:
-                print(f"Invalid action '{action}'. Supported actions are 'add', 'remove', and 'update'.")
-        else:
-            print(f"Group {group_id} not found.")
-
+        group = self.get_group(group_id)
+        return group.members.update(user_id, {"access_level": access_level})
+                    
+           
     def delete_group_member(self, group_id, user_id):
-        pass
+        group = self.get_group(group_id)
+        return group.members.delete(user_id)
 
-    def change_group_member_access(self, group_id, user_id, access_level):
-        """
-
-        :param group_id:
-        :param user_id:
-        :param access_level:
-        :return:
-        """
-        pass
-
-    def list_group_members(self, group_id):
-        """
-            获取指定组的所有成员
-        :param group_id: 组id
-        :return:
-        """
-        pass
-
-    def add_group_members(self, group_id, user_id, access_level):
-        pass
-
-    def delete_group_members(self, group_id, user_id):
-        pass
-
-    def change_group_members_access(self, group_id, user_id, access_level):
-        """
-
-        :param group_id:
-        :param user_id:
-        :param access_level:
-        :return:
-        """
-        pass
-
-    def get_user_info(self, user_id):
-        """
-            获取指定ID用户的详细信息
-        :param user_id: 用户id
-        :return:
-        """
-        return self.gitlab.users.get(user_id)
 
     def create_project(self, name, description, visibility="private"):
         """
@@ -236,8 +214,6 @@ class GitLabManager:
         """
         return self.gitlab.projects.create({"name": name, "description": description, "visibility": visibility})
 
-    def update_project(self, name, description, visibility="private"):
-        pass
 
     def list_projects(self):
         """
@@ -285,6 +261,9 @@ class GitLabManager:
         :return:
         """
         return self.gitlab.projects.get(project_id)
+    
+    def update_project(self, name, description, visibility="private"):
+        pass
 
     def delete_project(self, project_id):
         """
@@ -331,7 +310,7 @@ class GitLabManager:
         project = self.get_project(project_id)
         project.branches.delete(branch_name)
 
-    def protect_branch(self, project_id, branch_name,
+    def create_protect_branch(self, project_id, branch_name,
                        push_access_levels=None,
                        merge_access_levels=None,
                        unprotect_access_levels=None, code_owner_approval_required=False,
@@ -366,18 +345,7 @@ class GitLabManager:
                 return False
         else:
             return False
-
-    def delete_protected_branch(self, project_id, branch_name):
-        """
-            把保护分支删除
-        :param project_id:
-        :param branch_name:
-        :return:
-        """
-        project = self.get_project(project_id)
-        protected_branch = project.protectedbranches.get(branch_name)
-        protected_branch.delete()
-
+    
     def get_protected_branch(self, project_id, branch_name):
         """
             获取指定分支的保护规则
@@ -432,20 +400,17 @@ class GitLabManager:
         else:
             return False
 
-    def list_merge_requests(self, project_id, state="opened"):
+    def delete_protected_branch(self, project_id, branch_name):
         """
-            列出指定项目中处于特定状态（默认为打开状态）的合并请求
-        :param project_id: 项目id
-        :param state:
+            把保护分支删除
+        :param project_id:
+        :param branch_name:
         :return:
-            返回的是对象 iid是项目merge的id
         """
         project = self.get_project(project_id)
-        if project:
-            return project.mergerequests.list(state=state)
-        else:
-            return []
-
+        protected_branch = project.protectedbranches.get(branch_name)
+        protected_branch.delete()
+    
     def create_merge_request(self, project_id, source_branch, target_branch, title, description=None):
         """
             在指定项目中创建新的合并请求,这里存在失败的可能,需要特殊处理
@@ -471,6 +436,21 @@ class GitLabManager:
         else:
             return None
 
+    def list_merge_requests(self, project_id, state="opened"):
+        """
+            列出指定项目中处于特定状态（默认为打开状态）的合并请求
+        :param project_id: 项目id
+        :param state:
+        :return:
+            返回的是对象 iid是项目merge的id
+        """
+        project = self.get_project(project_id)
+        if project:
+            return project.mergerequests.list(state=state)
+        else:
+            return []
+
+
     def accept_merge_request(self, project_id, merge_request_id):
         """
             接受merge请求
@@ -495,19 +475,7 @@ class GitLabManager:
         project = self.get_project(project_id)
         return project.mergerequests.delete(merge_request_id)
 
-    def list_tags(self, project_id):
-        """
-            列出指定项目的所有标签
-        :param project_id: 项目id
-        :return: 对象
-        """
-        project = self.get_project(project_id)
-        if project:
-            return project.tags.list()
-        else:
-            return []
-
-    def create_tag(self, project_id, tag_name, ref, message):
+     def create_tag(self, project_id, tag_name, ref, message):
         """
             在指定项目中创建新标签
         :param project_id: 项目标签
@@ -522,6 +490,18 @@ class GitLabManager:
             return project.tags.create(tag_params)
         else:
             return None
+
+    def list_tags(self, project_id):
+        """
+            列出指定项目的所有标签
+        :param project_id: 项目id
+        :return: 对象
+        """
+        project = self.get_project(project_id)
+        if project:
+            return project.tags.list()
+        else:
+            return []
 
     def delete_tag(self, project_id, tag_name):
         """
