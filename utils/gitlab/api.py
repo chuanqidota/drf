@@ -855,6 +855,6 @@ if __name__ == '__main__':
     # print(manager.delete_file(57183172, "README.md", "delete_file", "main"))
 
     # 文件操作>更新项目仓库中的文件
-    with open("./REDME.md", "rb") as f:
-        content = f.read()
-        print(manager.update_file_content(57183172, "README1.md", content, "update-file","main"))
+    # with open("./REDME.md", "rb") as f:
+    #     content = f.read()
+    #     print(manager.update_file_content(57183172, "README1.md", content, "update-file","main"))
