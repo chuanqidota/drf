@@ -132,3 +132,8 @@ if __name__ == '__main__':
     # with ExcelManager("test1.xlsx", "r") as excel:
     #     data = excel.read_sheet_data()
     #     print(data)
+
+    # 读所有数据
+    # with ExcelManager("test1.xlsx","r") as excel:
+    #     data = excel.read_all_sheet_data()
+    #     print(data)
