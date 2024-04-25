@@ -80,7 +80,7 @@ class AnsibleApi:
         # self.task_list = task_list
         self.loader = DataLoader()
         self.result_callback = ResultCallback()
-        # self.passwords = dict(vault_pass=passwords)
+        # self.passwords = dict(vault_pass='0815')
         self.passwords = dict()
         self.inventory = InventoryManager(loader=self.loader, sources=['/Users/zqqzqq/ansible/hosts'])
         self.variable_manager = VariableManager(loader=self.loader, inventory=self.inventory)
@@ -106,7 +106,7 @@ class AnsibleApi:
                 run_tree=False,
             )
             result = tqm.run(play)  # most interesting data for a play is actually sent to the callback's methods
-            print(result)
+            return result
         finally:
             # we always need to cleanup child procs and the structres we use to communicate with them
             if tqm is not None:
@@ -135,7 +135,8 @@ if __name__ == '__main__':
     a = AnsibleApi()
     host_list = ['localhost']
     task_list = [
-        dict(action=dict(module='shell', args="ls -l"))
+        dict(action=dict(module='command', args="ls -l")),
+        dict(action=dict(module='command', args="pwd"))
     ]
-    a.run_adhoc(name="checkConnection", hosts=host_list, tasks=task_list)
-    # print(a.run_playhook(playbook=["/Users/zqqzqq/ansible/playbook/ping_book.yml"]))
+    # print(a.run_adhoc(name="checkConnection", hosts=host_list, tasks=task_list))
+    print(a.run_playhook(playbook=["/Users/zqqzqq/ansible/playbook/ping_book.yml"]))
