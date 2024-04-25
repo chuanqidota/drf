@@ -92,7 +92,7 @@ class ElasticSearchManager(object):
         :param index: 指定的索引名称。
         :return: 布尔值，索引存在返回True，否则返回False。
         """
-        return self.client.indices.exists(index=index)
+        return self.client.indices.exists(index=index).body
 
     def delete_index(self, index):
         """
