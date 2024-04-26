@@ -3,6 +3,10 @@ import shutil
 
 from ansible import context
 from ansible.module_utils.common.collections import ImmutableDict
+"""
+ansible==9.5.1
+ansible-base==2.10.17
+"""
 
 # 注意: 使用namedtuple实现Options的方式，官网已经不推荐使用
 #       网上很多例子都是按照Options的方式，会有报错如下：
