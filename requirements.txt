@@ -33,4 +33,5 @@ pandas==2.2.2
 python-gitlab==4.4.0
 ansible==9.5.1
 ansible-base==2.10.17
+ansible-runner==2.3.6
 
