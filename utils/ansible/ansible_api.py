@@ -1,4 +1,5 @@
 """
+项目依赖
 ansible==9.5.1
 ansible-base==2.10.17
 """
@@ -123,7 +124,7 @@ class ResultCallback(CallbackBase):
         })
 
 
-class AnsibleApi:
+class AnsibleManager(object):
     # 设置Ansible环境
     context.CLIARGS = ImmutableDict(
         connection='paramiko',  # 指定Ansible与目标主机之间的连接类型 paramiko/ssh
@@ -220,7 +221,7 @@ if __name__ == '__main__':
           ansible.builtin.ping:
     """
     _sources = ['/Users/zqqzqq/ansible/hosts.ini']
-    a = AnsibleApi(_sources)
+    a = AnsibleManager(_sources)
     host_list = ['localhost']
     task_list = [
         # dict(action=dict(module='command', args="df -h")),
