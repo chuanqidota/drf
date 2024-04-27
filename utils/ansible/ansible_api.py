@@ -190,6 +190,7 @@ class AnsibleApi:
     def run_playbook(self, playbook):
         """
             执行ansible-playbook
+            剧本中最好配置gather_facts: false 不然每次都要采集主机信息
         :param playbook: 剧本路径列表
         :return:
         """
@@ -204,7 +205,21 @@ class AnsibleApi:
 
 
 if __name__ == '__main__':
-    _sources = ['/Users/zqqzqq/ansible/hosts']
+    """
+    host.ini 文件内容
+    [local]
+    localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
+    
+    ping_book.yaml 文件内容
+    ---
+    - name: test-playbook-name
+      hosts: localhost
+      gather_facts: false
+      tasks:
+        - name: test-playbook-task
+          ansible.builtin.ping:
+    """
+    _sources = ['/Users/zqqzqq/ansible/hosts.ini']
     a = AnsibleApi(_sources)
     host_list = ['localhost']
     task_list = [
