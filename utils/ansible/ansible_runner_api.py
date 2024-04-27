@@ -1,14 +1,14 @@
-import os
-import shutil
-from ansible_runner import Runner,run_command
+import json
+
+from ansible_runner import Runner, run_command
+
 
 class AnsibleRunnerManager:
-  def __init__(self, private_data_dir, host_list=None, inventory_path=None,playbook_path=None):
+    def __init__(self, private_data_dir, host_list=None, inventory_path=None, playbook_path=None):
         self.private_data_dir = private_data_dir
         self.host_list = host_list
         self.inventory = inventory_path
         self.playbook_path = playbook_path
-        
 
     def run_adhoc(self, module, module_args, host_pattern='all'):
         """
@@ -54,15 +54,13 @@ class AnsibleRunnerManager:
         """
         artifacts = self.get_job_artifacts(job_id)
         out = {
-            "stdout":artifacts['stdout'],
-            "stderr":artifacts['stderr']
+            "stdout": artifacts['stdout'],
+            "stderr": artifacts['stderr']
         }
         return out
-
 
     def clean_up(self):
         """
         clean_up: 清理Ansible Runner产生的临时文件和目录
         """
         run_command(f"ansible-runner cleanup {self.private_data_dir}")
-
