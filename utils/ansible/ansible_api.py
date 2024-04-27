@@ -29,8 +29,7 @@ class ResultCallback(CallbackBase):
         host = result._host
         print(json.dumps({host.name: result._result}, indent=4))
 
-
-    def v2_playbook_on_play_start(self,play):
+    def v2_playbook_on_play_start(self, play):
         print("playbook_on_play_start: %s" % play.name)
 
     def v2_runner_on_failed(self, result, **kwargs):
@@ -46,7 +45,7 @@ class AnsibleApi:
     context.CLIARGS = ImmutableDict(
         connection='ssh', remote_user=None, listtags=None, listhosts=None, listtasks=None,
         module_path=None, verbosity=5, ask_sudo_pass=False, private_key_file=None,
-        become=True, become_method='sudo', become_user='root',
+        become=True, become_method=None, become_user='root',
         forks=10, check=False, diff=False, syntax=None, start_at_task=None,
     )
 
@@ -60,9 +59,9 @@ class AnsibleApi:
         self.passwords = dict(become_pass='0815')
         # self.passwords = dict()
 
-        self.loader = DataLoader()
+        self.loader = DataLoader()  # 用来加载解析yaml文件或JSON内容,并且支持vault的解密
         self.inventory = InventoryManager(loader=self.loader, sources=sources)
-        self.variable_manager = VariableManager(loader=self.loader, inventory=self.inventory)
+        self.variable_manager = VariableManager(loader=self.loader, inventory=self.inventory)  # 管理变量的类,包括主机,组,扩展等变量
 
     def run_adhoc(self, name, hosts, tasks):
         play_source = dict(
@@ -87,12 +86,9 @@ class AnsibleApi:
             result = tqm.run(play)  # most interesting data for a play is actually sent to the callback's methods
             return result
         finally:
-            # we always need to cleanup child procs and the structres we use to communicate with them
             if tqm is not None:
                 tqm.cleanup()
-
-            # Remove ansible tmpdir
-            shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
+            self.loader.cleanup_all_tmp_files()
 
     def run_playhook(self, playbook):
         # self.variable_manager.extra_vars = {
