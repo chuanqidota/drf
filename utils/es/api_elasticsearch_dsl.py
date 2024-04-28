@@ -1,7 +1,6 @@
 import datetime
 
 from elasticsearch_dsl.connections import get_connection
-from elasticsearch_dsl._sync.search import Search
 
 
 class ElasticSearchManager(object):
@@ -33,16 +32,13 @@ class ElasticSearchManager(object):
                 response = self.client.indices.create(index=index)
                 # 判断索引创建是否成功
                 # {'acknowledged': True, 'shards_acknowledged': True, 'index': 'test_index'}
-                if response["acknowledged"]:
-                    return True
-                else:
-                    return False
+                return True if response["acknowledged"] else False
             except Exception as e:
                 # 创建索引过程中发生异常，返回False
                 return False
         else:
             # 索引已存在，无需创建
-            return False
+            return True
 
     def get_index_info(self, index):
         """
