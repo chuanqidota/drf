@@ -82,6 +82,17 @@ class RemoteSSHExecutor:
         sftp.put(local_path, remote_path)
         sftp.close()
 
+    def stream_upload_file(self, file_obj, remote_path):
+        """
+            将文件流上传到远程服务器指定路径
+        :param file_obj: 文件对象
+        :param remote_path: 远程路径
+        :return:
+        """
+        sftp = self.client.open_sftp()
+        sftp.putfo(file_obj, remote_path)
+        sftp.close()
+
     def download_file(self, remote_path, local_path):
         """
             从远程服务器下载文件到本地指定路径
@@ -92,6 +103,28 @@ class RemoteSSHExecutor:
         sftp = self.client.open_sftp()
         sftp.get(remote_path, local_path)
         sftp.close()
+
+    def stream_download_file(self, remote_path, file_obj):
+        """
+            从远程服务器下载文件到本地文件对象
+        :param remote_path: 远程服务器上的文件路径
+        :param file_obj: 本地文件对象
+        :return:
+        """
+        sftp = self.client.open_sftp()
+        sftp.getfo(remote_path, file_obj)
+        sftp.close()
+
+    def list_file(self, remote_path):
+        """
+            列出远程服务器指定路径下的文件列表
+        :param remote_path:
+        :return:
+        """
+        sftp = self.client.open_sftp()
+        file_list = sftp.listdir(remote_path)
+        sftp.close()
+        return file_list
 
 
 if __name__ == '__main__':
