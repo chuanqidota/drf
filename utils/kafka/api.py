@@ -1,6 +1,6 @@
 import json
+
 from kafka import KafkaProducer, KafkaConsumer
-from kafka.errors import KafkaError, KafkaTimeoutError
 
 
 class KafkaManager:
