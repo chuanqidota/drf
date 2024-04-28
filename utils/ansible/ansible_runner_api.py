@@ -3,57 +3,57 @@ ansible-runner==2.3.6
 
 run参数含义
 private_data_dir	str	包含 Runner 元数据所需的所有文件的目录，用于调用 Runner 模块。输出结果也将存储在此处以便后续消费。
-playbook	str或list	要在 Ansible 执行时调用的 playbook（可以是 play 或 play 列表，或者相对于 private_data_dir/project 的路径）。
+playbook	        str或list 要在 Ansible 执行时调用的 playbook（可以是 play 或 play 列表，或者相对于 private_data_dir/project 的路径）。
 rotate_artifacts	int	最多保留 n 个工件目录，禁用则为 0（默认值）。用来控制运行结果的保留个数，0为全保存，用来清理产生的结果，非常方便
-envvars	dict	Ansible 执行时要使用的环境变量。还将从 private_data_dir 中的 env/envvars 中读取环境变量。
-extravars	dict	在 Ansible 运行时通过 -e 传递的额外变量。还将从 private_data_dir 中的 env/extravars 中读取额外变量。
-ssh_key	str	作为 ansible-playbook 运行的一部分传递给 ssh-agent 的 SSH 私钥。
-artifact_dir	str	要在其中存储工件（artifact）的目录的路径，默认为 private_data_dir 中的 'artifacts'。
-cmdline	str	从 private_data_dir 中的 env/cmdline 中读取的 Ansible 命令行选项。
-limit	str	与 ansible 的 --limit 参数匹配以进一步限制要使用的清单。
-forks	int	控制 Ansible 并行并发性。
-verbosity	int	控制 ansible-playbook 的输出详细程度。
-quiet	bool	禁用所有输出。
-event_handler	Callable	可选回调，在 Runner 本身接收到任何事件时被调用，返回 True 以保留事件。
-cancel_callback	Callable	可选回调，可以通知 Runner 取消（返回 True）或不取消（返回 False）。
-finished_callback	Callable	可选回调，在关闭进程并完成清理后被调用。
-status_handler	Callable	可选回调，每当状态发生变化（例如...启动、运行、失败、成功、超时）时被调用。
-artifacts_handler	Callable	可选回调，在运行结束时处理来自运行的工件。
-json_mode	bool	在控制台和 stdout 文件中以 JSON 格式存储事件数据，而不是标准输出。
-module	str	在 ad-hoc 模式下要由 Runner 调用的模块。
-module_args	str	将提供给 ad-hoc 模式的模块参数。
-host_pattern	str	在 ad-hoc 模式下要匹配的主机模式。
-inventory	str或dict或list	通过覆盖 private_data_dir/inventory 中的清单目录/文件来指定特定的主机或主机列表。可以采用以下形式：
+envvars	            dict Ansible 执行时要使用的环境变量。还将从 private_data_dir 中的 env/envvars 中读取环境变量。
+extravars	        dict 在 Ansible 运行时通过 -e 传递的额外变量。还将从 private_data_dir 中的 env/extravars 中读取额外变量。
+ssh_key	            str	作为 ansible-playbook 运行的一部分传递给 ssh-agent 的 SSH 私钥。
+artifact_dir	    str	要在其中存储工件（artifact）的目录的路径，默认为 private_data_dir 中的 'artifacts'。
+cmdline	            str	从 private_data_dir 中的 env/cmdline 中读取的 Ansible 命令行选项。
+limit	            str	与 ansible 的 --limit 参数匹配以进一步限制要使用的清单。
+forks	            int	控制 Ansible 并行并发性。
+verbosity	        int	控制 ansible-playbook 的输出详细程度。
+quiet	            bool 禁用所有输出。
+event_handler	    Callable 可选回调，在 Runner 本身接收到任何事件时被调用，返回 True 以保留事件。
+cancel_callback	    Callable 可选回调，可以通知 Runner 取消（返回 True）或不取消（返回 False）。
+finished_callback	Callable 可选回调，在关闭进程并完成清理后被调用。
+status_handler	    Callable 可选回调，每当状态发生变化（例如...启动、运行、失败、成功、超时）时被调用。
+artifacts_handler	Callable 可选回调，在运行结束时处理来自运行的工件。
+json_mode	        bool 在控制台和 stdout 文件中以 JSON 格式存储事件数据，而不是标准输出。
+module	            str	在 ad-hoc 模式下要由 Runner 调用的模块。
+module_args	        str	将提供给 ad-hoc 模式的模块参数。
+host_pattern	    str	在 ad-hoc 模式下要匹配的主机模式。
+inventory	        str或dict或list	通过覆盖 private_data_dir/inventory 中的清单目录/文件来指定特定的主机或主机列表。可以采用以下形式：
 - private_data_dir 中的库存文件路径
 - 支持 YAML/JSON 清单结构的本机 Python 字典
 - INI 格式的文本 INI
 - 空列表以禁用传递清单
-ident	str	此调用 Runner 的标识符。将用于创建和命名包含结果的 artifact 目录。
-role	str	要执行的角色名称。
-roles_path	dict或list	要分配给 ANSIBLE_ROLES_PATH 的目录或目录列表。
-passwords	dict	一个字典，包含在处理 Ansible 输出时使用的密码提示模式和响应值。还将从 private_data_dir 中的 env/passwords 中读取密码。
-settings	dict	一个字典，包含 ansible-runner 运行时环境的设置值。这些设置还将从 private_data_dir 中的 env/settings 中读取。
-suppress_env_files	bool	禁用写入可能包含敏感信息的 env 文件。
-project_dir	str	playbook 内容的路径，默认为 private_data_dir 中的 'project'。
-timeout	int	以秒为单位的超时值，将在执行命令时传递给 pexpect 或 subprocess 调用（基于选择的 runner_mode）。如果触发超时，它将强制取消执行。
-streamer	str	可选地以流式传输管道的一个步骤调用 ansible-runner。
-_input	io.FileIO	用于流式传输管道输入的可选项文件或类似文件的对象。
-_output	io.FileIO	用于流式传输管道输出的可选项文件或类似文件的对象。
+ident	            str	此调用 Runner 的标识符。将用于创建和命名包含结果的 artifact 目录。
+role	            str	要执行的角色名称。
+roles_path	        dict或list 要分配给 ANSIBLE_ROLES_PATH 的目录或目录列表。
+passwords	        dict 一个字典，包含在处理 Ansible 输出时使用的密码提示模式和响应值。还将从 private_data_dir 中的 env/passwords 中读取密码。
+settings	        dict 一个字典，包含 ansible-runner 运行时环境的设置值。这些设置还将从 private_data_dir 中的 env/settings 中读取。
+suppress_env_files	bool 禁用写入可能包含敏感信息的 env 文件。
+project_dir	        str	playbook 内容的路径，默认为 private_data_dir 中的 'project'。
+timeout	            int	 以秒为单位的超时值，将在执行命令时传递给 pexpect 或 subprocess 调用（基于选择的 runner_mode）。如果触发超时，它将强制取消执行。
+streamer	        str	可选地以流式传输管道的一个步骤调用 ansible-runner。
+_input	            io.FileIO	用于流式传输管道输入的可选项文件或类似文件的对象。
+_output	            io.FileIO	用于流式传输管道输出的可选项文件或类似文件的对象。
 process_isolation	bool	启用进程隔离，使用容器引擎（例如 podman）或沙盒（例如 bwrap）。
 process_isolation_executable	str	用于隔离执行的进程隔离可执行文件或容器引擎（默认：podman）。
-process_isolation_path	str	隔离的 playbook 运行将用于暂存的路径。（默认：/tmp）
+process_isolation_path	        str	隔离的 playbook 运行将用于暂存的路径。（默认：/tmp）
 process_isolation_hide_paths	str或list	系统中应隐藏 playbook 运行的一路径或多路径。
 process_isolation_show_paths	str或list	系统中应暴露给 playbook 运行的一路径或多路径。
-process_isolation_ro_paths	str或list	系统中应以只读方式暴露给 playbook 运行的一路径或多路径。
-container_image	str	在运行 ansible 任务时要使用的容器镜像（默认：quay.io/ansible/ansible-runner:devel）
-container_volume_mounts	list	以 'host_dir:/container_dir' 形式的绑定挂载列表。 （默认：None）
-container_options	list	要传递给执行引擎的容器选项列表。
+process_isolation_ro_paths	    str或list	系统中应以只读方式暴露给 playbook 运行的一路径或多路径。
+container_image	                str	在运行 ansible 任务时要使用的容器镜像（默认：quay.io/ansible/ansible-runner:devel）
+container_volume_mounts	        list 以 'host_dir:/container_dir' 形式的绑定挂载列表。 （默认：None）
+container_options	            list 要传递给执行引擎的容器选项列表。
 directory_isolation_base_path	str	一个可选路径，将用作临时目录的基本路径，项目内容将被复制到此位置，然后在此位置作为工作目录进行 playbook 执行。
-fact_cache	str	用于 'jsonfile' 类型事实缓存的子目录的名称，该子目录位于 artifacts 目录中。
-fact_cache_type	str	要使用的事实缓存类型。默认为 'jsonfile'。
-omit_event_data	bool	省略额外的 ansible 事件数据，但仍包括 stdout 和事件。
-only_failed_event_data	bool	除非事件失败，否则省略额外的 ansible 事件数据，但仍包括 stdout 和事件。
-check_job_event_data	bool	检查作业事件数据是否完全生成。如果事件数据未完全生成且值为 'True'，则会引发 'AnsibleRunnerException' 异常，如果设置为 'False'，则记录一条调试消息并继续执行。默认值为 'False'。
+fact_cache	                    str	用于 'jsonfile' 类型事实缓存的子目录的名称，该子目录位于 artifacts 目录中。
+fact_cache_type	                str	要使用的事实缓存类型。默认为 'jsonfile'。
+omit_event_data	                bool 省略额外的 ansible 事件数据，但仍包括 stdout 和事件。
+only_failed_event_data	        bool 除非事件失败，否则省略额外的 ansible 事件数据，但仍包括 stdout 和事件。
+check_job_event_data	        bool 检查作业事件数据是否完全生成。如果事件数据未完全生成且值为 'True'，则会引发 'AnsibleRunnerException' 异常，如果设置为 'False'，则记录一条调试消息并继续执行。默认值为 'False'。
 """
 import os.path
 import shutil
