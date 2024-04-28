@@ -207,6 +207,11 @@ class AnsibleManager(object):
 
 if __name__ == '__main__':
     """
+    ad-hoc和playbook的结果都会在回调函数中体现
+    可以重写回调函数来处理结果
+    """
+
+    """
     host.ini 文件内容
     [local]
     localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
