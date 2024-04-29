@@ -1,6 +1,9 @@
 import datetime
 import traceback
-
+"""
+elasticsearch_dsl==8.13.0
+针对es8.0
+"""
 from elasticsearch_dsl.connections import get_connection
 
 
@@ -49,8 +52,6 @@ class ElasticSearchManager(object):
                     response = self.client.indices.create(index=index, body={"mappings": {"properties": mapping}})
                 else:
                     response = self.client.indices.create(index=index)
-                # 判断索引创建是否成功
-                # {'acknowledged': True, 'shards_acknowledged': True, 'index': 'test_index'}
                 return True if response["acknowledged"] else False
             except Exception as e:
                 print(traceback.format_exc(),repr(e))
@@ -94,7 +95,7 @@ class ElasticSearchManager(object):
             response = self.client.indices.get(index=index)
             return response
         except Exception as e:
-            # 获取索引信息过程中发生异常，返回None
+            print(f"获取索引-{index}-信息-{repr(e)}")
             return None
 
     def exist_index(self, index):
@@ -120,6 +121,7 @@ class ElasticSearchManager(object):
             else:
                 return False
         except Exception as e:
+            print(f"删除索引-{index}-失败-{repr(e)}")
             return False
 
     def get_mapping(self, index):
@@ -144,6 +146,7 @@ class ElasticSearchManager(object):
             response = self.client.indices.get_mapping(index=index)
             return response
         except Exception as e:
+            print(f"索取索引-{index}-的mapping信息失败-{repr(e)}")
             return None
 
     def create_or_add_mapping(self, index, mappings):
@@ -163,32 +166,8 @@ class ElasticSearchManager(object):
             response = self.client.indices.put_mapping(index=index, body={"properties": mappings})
             return True if response["acknowledged"] else False
         except Exception as e:
-            print(f"Failed to put mappings for index {index}: {e}")
+            print(f"创建和增加mapping信息失败-{repr(e)}")
         return False
-
-    def insert_document(self, index, document_data, document_id=None):
-        """
-        插入一个文档到指定索引。
-
-        :param index: 索引名称。
-        :param document_id: 文档ID。
-        :param document_data: 文档数据，应为一个字典结构。
-             {
-                  "field1": "value1",
-                  "field2": "value2",
-                  ...
-            }
-        :return: 插入操作是否成功，返回True或False。
-        """
-        try:
-            if document_id:
-                self.client.index(index=index, id=document_id, body=document_data)
-            else:
-                self.client.index(index=index, body=document_data)
-            return True
-        except Exception as e:
-            print(f"Failed to insert document into index {index}: {e}")
-            return False
 
     def insert_timestamp_document(self, index, document_data, document_id=None):
         """
@@ -199,11 +178,16 @@ class ElasticSearchManager(object):
         :param document_id: (可选)要插入文档的ID。如果未提供，则由系统自动生成。
         :return: 返回插入文档的结果，具体取决于insert_document方法的实现。
         """
-
-        # 为文档数据添加当前时间戳
-        document_data.update({"@timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
-        # 调用方法插入更新后的时间戳文档
-        return self.insert_document(index, document_data, document_id)
+        try:
+            document_data.update({"@timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+            self.insert_document(index, document_data, document_id)
+            return True
+        except Exception as e:
+            print(f"向索引-{index}-插入数据-{document_data}-失败")
+            return False
+    
+    def insert_document(self):
+        pass
 
     def get_document(self, index, document_id):
         """
@@ -222,7 +206,7 @@ class ElasticSearchManager(object):
             response = self.client.get(index=index, id=document_id)
             return response["_source"]
         except Exception as e:
-            print(f"Failed to retrieve document from index {index}: {e}")
+            print(f"获取指定索引-{index}-文档id-{document_id}-失败")
             return None
 
     def update_document(self, index, document_id, update_data):
@@ -242,7 +226,7 @@ class ElasticSearchManager(object):
             self.client.update(index=index, id=document_id, body={"doc": update_data})
             return True
         except Exception as e:
-            print(f"Failed to update document in index {index}: {e}")
+            print(f"更新索引-{index}-的文档-{document_id}-信息失败")
             return False
 
     def delete_document(self, index, document_id):
@@ -257,7 +241,7 @@ class ElasticSearchManager(object):
             self.client.delete(index=index, id=document_id)
             return True
         except Exception as e:
-            print(f"Failed to delete document from index {index}: {e}")
+            print(f"删除置顶文档id失败")
             return False
 
     def delete_documents_by_query(self, index, query):
@@ -277,7 +261,7 @@ class ElasticSearchManager(object):
             deleted_docs_count = delete_response["deleted"]
             return deleted_docs_count
         except Exception as e:
-            print(f"Failed to delete documents by query in index {index}: {e}")
+            print(f"根据查询")
             return 0
 
     def common_search(self, index, query=None, limit=10, offset=0, order=None):
