@@ -1,4 +1,5 @@
 import datetime
+import traceback
 
 from elasticsearch_dsl.connections import get_connection
 
@@ -19,30 +20,47 @@ class ElasticSearchManager(object):
         self.client = _client if _client else get_connection()
         self.client.options(ignore_status=400)
 
-    def create_index(self, index):
+    def create_index(self, index, mapping=None):
         """
-        尝试创建一个指定名称的索引，如果该索引不存在的话。
+            创建索引
 
         :param index: 指定的索引名称。
+        :param mapping: 
+            {
+                "field1": {
+                    "type": "text"
+                },
+                "field2": {
+                    "type": "integer"
+                },
+                "field3": {
+                    "type": "date"
+                },
+                "field4": {
+                    "type": "keyword"
+                }
+            }
         :return: 布尔值，索引成功创建返回True，否则返回False。
         """
         # 检查索引是否已经存在，如果不存在则尝试创建
         if not self.client.indices.exists(index=index):
             try:
-                response = self.client.indices.create(index=index)
+                if mapping:
+                    response = self.client.indices.create(index=index, body={"mappings": {"properties": mapping}})
+                else:
+                    response = self.client.indices.create(index=index)
                 # 判断索引创建是否成功
                 # {'acknowledged': True, 'shards_acknowledged': True, 'index': 'test_index'}
                 return True if response["acknowledged"] else False
             except Exception as e:
-                # 创建索引过程中发生异常，返回False
+                print(traceback.format_exc(),repr(e))
                 return False
         else:
-            # 索引已存在，无需创建
             return True
 
     def get_index_info(self, index):
         """
-        获取索引信息
+            获取索引信息
 
         :param index: 指定的索引名称。
         :return: 索引信息，如果索引不存在则返回None。
@@ -73,9 +91,7 @@ class ElasticSearchManager(object):
                 }
         """
         try:
-            # 获取索引信息
             response = self.client.indices.get(index=index)
-            # 返回索引信息
             return response
         except Exception as e:
             # 获取索引信息过程中发生异常，返回None
@@ -97,49 +113,13 @@ class ElasticSearchManager(object):
         :param index: 索引的名称，必须是一个非空字符串。
         :return: 如果索引成功被删除则返回True，如果索引不存在或删除操作出现异常则返回False。
         """
-        # 校验index参数是否为空或非字符串类型
-        if not index or not isinstance(index, str):
-            raise ValueError("Index name must be a non-empty string.")
         try:
-            # 检查索引是否存在
             if self.client.indices.exists(index=index):
-                # 如果存在，则删除该索引
                 self.client.indices.delete(index=index)
                 return True
             else:
-                # 索引不存在，直接返回False
                 return False
         except Exception as e:
-            # 删除操作出现异常，返回False
-            return False
-
-    def create_index_with_mapping(self, index, mapping):
-        """
-        创建一个索引并指定其mapping。
-
-        :param index: 索引名称。
-        :param mapping: 索引mapping定义，应为一个字典结构。
-            {
-                "field1": {
-                    "type": "text"
-                },
-                "field2": {
-                    "type": "integer"
-                },
-                "field3": {
-                    "type": "date"
-                },
-                "field4": {
-                    "type": "keyword"
-                }
-            }
-        :return: 创建操作是否成功，返回True或False。
-        """
-        try:
-            self.client.indices.create(index=index, body={"mappings": {"properties": mapping}})
-            return True
-        except Exception as e:
-            print(f"Failed to create index {index} with mapping: {e}")
             return False
 
     def get_mapping(self, index):
@@ -161,12 +141,9 @@ class ElasticSearchManager(object):
                  }
         """
         try:
-            # 获取索引映射信息
             response = self.client.indices.get_mapping(index=index)
-            # 返回映射信息
             return response
         except Exception as e:
-            # 获取映射信息过程中发生异常，返回None
             return None
 
     def create_or_add_mapping(self, index, mappings):
@@ -184,10 +161,8 @@ class ElasticSearchManager(object):
         """
         try:
             response = self.client.indices.put_mapping(index=index, body={"properties": mappings})
-            if response.get('acknowledged', True):
-                return True
+            return True if response["acknowledged"] else False
         except Exception as e:
-            # 出现异常，打印错误信息并返回 False
             print(f"Failed to put mappings for index {index}: {e}")
         return False
 
