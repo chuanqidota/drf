@@ -22,8 +22,9 @@ class EtcdManager:
 
     def __enter__(self):
         self.get_client()
+        return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
     def get_client(self):
@@ -74,8 +75,8 @@ class EtcdManager:
 
 
 if __name__ == '__main__':
-    etcd = EtcdManager()
-    etcd.get_client()
-    etcd.set_key_value('test', 'test')
-    # etcd.get_key_value("test")
-    # etcd.delete_key("test")
+    with  EtcdManager() as etcd_manager:
+        etcd_manager.get_client()
+        etcd_manager.set_key_value('test', 'test')
+        # etcd_manager.get_key_value("test")
+        # etcd_manager.delete_key("test")
