@@ -52,3 +52,238 @@ apps_api = client.AppsV1Api()  # deployment
 networking_api = client.NetworkingV1beta1Api()  # ingress
 storage_api = client.StorageV1Api()  # storage_class
 """
+from kubernetes import client, config
+import json
+
+# 加载 Kubernetes 配置文件（kubeconfig）
+config.load_kube_config()
+
+# 创建 Kubernetes 客户端对象
+v1 = client.CoreV1Api()
+
+# Service 的 JSON 定义
+service_json = {
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "my-service"
+  },
+  "spec": {
+    "selector": {
+      "app": "my-app"
+    },
+    "ports": [
+      {
+        "protocol": "TCP",
+        "port": 80,
+        "targetPort": 9376
+      }
+    ]
+  }
+}
+
+# 创建 Service
+def create_service():
+    return v1.create_namespaced_service(namespace="default", body=service_json)
+
+# 列出所有 Service
+def list_services():
+    return v1.list_namespaced_service(namespace="default")
+
+# 删除 Service
+def delete_service(service_name):
+    return v1.delete_namespaced_service(name=service_name, namespace="default")
+
+config.load_kube_config()
+
+# 创建 Kubernetes 客户端对象
+v1 = client.CoreV1Api()
+
+# 创建 Pod
+def create_pod():
+    pod_manifest = {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+            "name": "my-pod"
+        },
+        "spec": {
+            "containers": [
+                {
+                    "name": "my-container",
+                    "image": "nginx",
+                    "ports": [
+                        {
+                            "containerPort": 80
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    return v1.create_namespaced_pod(namespace="default", body=pod_manifest)
+
+# 读取 Pod
+def read_pod(pod_name):
+    return v1.read_namespaced_pod(name=pod_name, namespace="default")
+
+# 更新 Pod
+def update_pod(pod_name):
+    pod = read_pod(pod_name)
+    pod.spec.containers[0].image = "nginx:latest"
+    return v1.replace_namespaced_pod(name=pod_name, namespace="default", body=pod)
+
+# 删除 Pod
+def delete_pod(pod_name):
+    return v1.delete_namespaced_pod(name=pod_name, namespace="default")
+
+# 查询 Pod 状态
+def get_pod_status(pod_name):
+    pod = read_pod(pod_name)
+    return pod.status.phase
+
+
+from kubernetes import client, config
+
+def get_deployment_info(deployment_name):
+    config.load_kube_config()
+    api_instance = client.AppsV1Api()
+    response = api_instance.read_namespaced_deployment(name=deployment_name, namespace="default")
+    print(f"Deployment '{deployment_name}' details: {response.to_dict()}")
+
+def create_deployment():
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+
+    deployment_manifest = {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "my-new-deployment"},
+        "spec": {
+            "replicas": 3,
+            "selector": {"matchLabels": {"app": "my-app"}},
+            "template": {
+                "metadata": {"labels": {"app": "my-app"}},
+                "spec": {
+                    "containers": [
+                        {
+                            "name": "my-container",
+                            "image": "nginx:latest",
+                            "ports": [{"containerPort": 80}]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    apps_v1_api.create_namespaced_deployment(body=deployment_manifest, namespace="default")
+
+def scale_deployment(deployment_name, replicas):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    body = {"spec": {"replicas": replicas}}
+    apps_v1_api.patch_namespaced_deployment_scale(name=deployment_name, namespace="default", body=body)
+
+
+def pause_deployment(deployment_name):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    patch_body = {"spec": {"paused": True}}
+    apps_v1_api.patch_namespaced_deployment(name=deployment_name, namespace="default", body=patch_body)
+
+def resume_deployment(deployment_name):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    patch_body = {"spec": {"paused": False}}
+    apps_v1_api.patch_namespaced_deployment(name=deployment_name, namespace="default", body=patch_body)
+
+def delete_deployment(deployment_name):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    apps_v1_api.delete_namespaced_deployment(name=deployment_name, namespace="default", body=client.V1DeleteOptions())
+
+from kubernetes import client, config
+
+def create_replicaset():
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+
+    replicaset_manifest = {
+        "apiVersion": "apps/v1",
+        "kind": "ReplicaSet",
+        "metadata": {"name": "my-replicaset"},
+        "spec": {
+            "replicas": 3,
+            "selector": {"matchLabels": {"app": "my-app"}},
+            "template": {
+                "metadata": {"labels": {"app": "my-app"}},
+                "spec": {
+                    "containers": [{"name": "my-container", "image": "nginx"}]
+                },
+            },
+        },
+    }
+
+    apps_v1_api.create_namespaced_replica_set(namespace="default", body=replicaset_manifest)
+
+# create_replicaset()
+
+
+def get_replicaset(name):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    replicaset = apps_v1_api.read_namespaced_replica_set(name, "default")
+    print(f"ReplicaSet '{name}': {replicaset.to_dict()}")
+
+# get_replicaset("my-replicaset")
+def update_replicas(replicaset_name, replicas):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    body = {"spec": {"replicas": replicas}}
+    apps_v1_api.patch_namespaced_replica_set(name=replicaset_name, namespace="default", body=body)
+
+# update_replicas("my-replicaset", 5)
+def delete_replicaset(replicaset_name):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    apps_v1_api.delete_namespaced_replica_set(name=replicaset_name, namespace="default", body=client.V1DeleteOptions())
+
+# delete_replicaset("my-replicaset")
+
+
+
+
+# 示例
+if __name__ == "__main__":
+    pass
+    # 创建 Service
+    # create_service()
+    # print("Service created.")
+    #
+    # # 列出所有 Service
+    # print("\nList of Services:")
+    # print(list_services())
+    # for svc in list_services().items:
+    #     print("- ", svc.metadata.name)
+
+    # # 删除 Service
+    # delete_service("my-service")
+    # print("\nService deleted.")
+
+    # print(create_pod())
+
+    # print(read_pod("my-pod"))
+
+    # print(update_pod("my-pod"))
+
+    # print(get_pod_status("my-pod"))
+
+    # print(delete_pod("my-pod"))
+
+    # create_deployment()
+
+    # scale_deployment("my-new-deployment",4)
+
+    # print(pause_deployment("my-new-deployment"))
+
+    # print(delete_deployment("my-new-deployment"))
