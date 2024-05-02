@@ -1,0 +1,34 @@
+# 单条文本
+"""
+Huawei Versatile Routing Platform Software
+VRP (R) software, Version 8.180 (CE6800 V200R005C10SPC607B607)
+Copyright (C) 2012-2018 Huawei Technologies Co., Ltd.
+HUAWEI CE6800 uptime is 0 day, 0 hour, 3 minutes
+"""
+
+# 模版
+"""
+Value Version (\S+)
+Value Model (\S+)
+Value Patch (\S+)
+Value Day (\S+)
+Value Hour (\S+)
+Value Minutes (\S+)
+
+Start
+ ^VRP \(R\) software, Version ${Version} \(${Model} ${Patch}\)
+ ^HUAWEI \S+ uptime is ${Day} day, ${Hour} hour, ${Minutes} minutes -> Record
+"""
+
+# 解析结果
+"""
+[
+{
+  "Version": "8.180",
+  "Model": "CE6800",
+  "Patch": "V200R005C10SPC607B607",
+  "Day": "0",
+  "Hour": "0",
+  "Minutes": "3"
+}]
+"""

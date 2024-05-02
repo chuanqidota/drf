@@ -1,0 +1,82 @@
+# 文本
+"""
+       Destination        Gateway                      Dist/Metric Last Change
+       -----------        -------                      ----------- -----------
+  B EX 0.0.0.0/0          via 192.0.2.73                  20/100        4w0d
+                          via 192.0.2.201
+                          via 192.0.2.202
+                          via 192.0.2.74
+  B IN 192.0.2.76/30     via 203.0.113.183                200/100        4w2d
+  B IN 192.0.2.204/30    via 203.0.113.183                200/100        4w2d
+  B IN 192.0.2.80/30     via 203.0.113.183                200/100        4w2d
+  B IN 192.0.2.208/30    via 203.0.113.183                200/100        4w2d
+"""
+
+# 模版
+"""
+Value Protocol (\S)
+Value Type (\S\S)
+Value Prefix (\S+)
+Value List Gateway (\S+)
+Value Distance (\d+)
+Value Metric (\d+)
+Value LastChange (\S+)
+
+Start
+ ^       -----------        -------                      ----------- ----------- -> Routes
+
+Routes
+ ^  \S \S\S -> Continue.Record
+ ^  ${Protocol} ${Type} ${Prefix}\s+via ${Gateway}\s+${Distance}/${Metric}\s+${LastChange}
+ ^\s+via ${Gateway}
+"""
+
+# 结果
+"""
+[
+{
+  "Protocol": "B",
+  "Type": "EX",
+  "Prefix": "0.0.0.0/0",
+  "Gateway": ["192.0.2.73", "192.0.2.201", "192.0.2.202", "192.0.2.74"],
+  "Distance": "20",
+  "Metric": "100",
+  "LastChange": "4w0d"
+},
+{
+  "Protocol": "B",
+  "Type": "IN",
+  "Prefix": "192.0.2.76/30",
+  "Gateway": ["203.0.113.183"],
+  "Distance": "200",
+  "Metric": "100",
+  "LastChange": "4w2d"
+},
+{
+  "Protocol": "B",
+  "Type": "IN",
+  "Prefix": "192.0.2.204/30",
+  "Gateway": ["203.0.113.183"],
+  "Distance": "200",
+  "Metric": "100",
+  "LastChange": "4w2d"
+},
+{
+  "Protocol": "B",
+  "Type": "IN",
+  "Prefix": "192.0.2.80/30",
+  "Gateway": ["203.0.113.183"],
+  "Distance": "200",
+  "Metric": "100",
+  "LastChange": "4w2d"
+},
+{
+  "Protocol": "B",
+  "Type": "IN",
+  "Prefix": "192.0.2.208/30",
+  "Gateway": ["203.0.113.183"],
+  "Distance": "200",
+  "Metric": "100",
+  "LastChange": "4w2d"
+}]
+"""

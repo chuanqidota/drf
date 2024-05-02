@@ -1,0 +1,133 @@
+# 文本
+"""
+GE1/0/0 current state : UP (ifindex: 2)
+Line protocol current state : UP
+Description: cofiged by netmiko
+Switch Port, PVID :    1, TPID : 8100(Hex), The Maximum Frame Length is 9216
+Internet protocol processing : disabled
+IP Sending Frames' Format is PKTFMT_ETHNT_2, Hardware address is 70b3-a4b1-9af5
+Last physical up time   : 2022-09-06 05:34:32
+Last physical down time : -
+Current system time: 2022-09-06 09:18:43
+Statistics last cleared:never
+    Last 300 seconds input rate: 0 bits/sec, 0 packets/sec
+    Last 300 seconds output rate: 0 bits/sec, 0 packets/sec
+    Input peak rate 0 bits/sec, Record time: -
+    Output peak rate 0 bits/sec, Record time: -
+    Input: 0 bytes, 0 packets
+    Output: 0 bytes, 0 packets
+    Input:
+      Unicast: 0 packets, Multicast: 0 packets
+      Broadcast: 0 packets, JumboOctets: 0 packets
+      CRC: 0 packets, Symbol: 0 packets
+      Overrun: 0 packets, InRangeLength: 0 packets
+      LongPacket: 0 packets, Jabber: 0 packets, Alignment: 0 packets
+      Fragment: 0 packets, Undersized Frame: 0 packets
+      RxPause: 0 packets
+    Output:
+      Unicast: 0 packets, Multicast: 0 packets
+      Broadcast: 0 packets, JumboOctets: 0 packets
+      Lost: 0 packets, Overflow: 0 packets, Underrun: 0 packets
+      System: 0 packets, Overruns: 0 packets
+      TxPause: 0 packets
+    Last 300 seconds input utility rate:  0.00%
+    Last 300 seconds output utility rate: 0.00%
+
+GE1/0/1 current state : UP (ifindex: 3)
+Line protocol current state : UP
+Description: cofiged by netmiko
+Switch Port, PVID :    1, TPID : 8100(Hex), The Maximum Frame Length is 9216
+Internet protocol processing : disabled
+IP Sending Frames' Format is PKTFMT_ETHNT_2, Hardware address is 70b3-a4b1-9af5
+Last physical up time   : 2022-09-06 05:34:32
+Last physical down time : -
+Current system time: 2022-09-06 09:18:44
+Statistics last cleared:never
+    Last 300 seconds input rate: 0 bits/sec, 0 packets/sec
+    Last 300 seconds output rate: 0 bits/sec, 0 packets/sec
+    Input peak rate 0 bits/sec, Record time: -
+    Output peak rate 0 bits/sec, Record time: -
+    Input: 0 bytes, 0 packets
+    Output: 0 bytes, 0 packets
+    Input:
+      Unicast: 0 packets, Multicast: 0 packets
+      Broadcast: 0 packets, JumboOctets: 0 packets
+      CRC: 0 packets, Symbol: 0 packets
+      Overrun: 0 packets, InRangeLength: 0 packets
+      LongPacket: 0 packets, Jabber: 0 packets, Alignment: 0 packets
+      Fragment: 0 packets, Undersized Frame: 0 packets
+      RxPause: 0 packets
+    Output:
+      Unicast: 0 packets, Multicast: 0 packets
+      Broadcast: 0 packets, JumboOctets: 0 packets
+      Lost: 0 packets, Overflow: 0 packets, Underrun: 0 packets
+      System: 0 packets, Overruns: 0 packets
+      TxPause: 0 packets
+    Last 300 seconds input utility rate:  0.00%
+    Last 300 seconds output utility rate: 0.00%
+
+
+NULL0 current state : UP (ifindex: 50)
+Line protocol current state : UP (spoofing)
+Description:
+Route Port,The Maximum Transmit Unit is 1500
+Internet protocol processing : disabled
+Current system time: 2022-09-06 09:18:46
+Physical is NULL DEV
+    Last 300 seconds input rate 0 bits/sec, 0 packets/sec
+    Last 300 seconds output rate 0 bits/sec, 0 packets/sec
+    Input: 0 packets,0 bytes
+           0 unicast,0 broadcast,0 multicast
+           0 errors,0 drops
+    Output:0 packets,0 bytes
+           0 unicast,0 broadcast,0 multicast
+           0 errors,0 drops
+    Last 300 seconds input utility rate:  0.00%
+    Last 300 seconds output utility rate: 0.00%
+"""
+
+# 模版
+"""
+Value Name (\S+)
+Value Index (\S+)
+Value PhyState (\S+)
+Value ProtocolState (\S+)
+Value Desc (\S+)
+Value LastPhyUpTime (.+)
+
+Start
+ ^${Name} current state : ${PhyState} \(ifindex: ${Index}\)
+ ^Line protocol current state : ${ProtocolState}
+ ^Description: ${ProtocolState}
+ ^Last physical up time   : ${LastPhyUpTime}
+ ^$$ -> Record
+"""
+
+# 解析结果
+"""
+[
+{
+  "Name": "GE1/0/0",
+  "Index": "2",
+  "PhyState": "UP",
+  "ProtocolState": "cofiged",
+  "Desc": "",
+  "LastPhyUpTime": "2022-09-06 05:34:32"
+},
+{
+  "Name": "GE1/0/1",
+  "Index": "3",
+  "PhyState": "UP",
+  "ProtocolState": "cofiged",
+  "Desc": "",
+  "LastPhyUpTime": "2022-09-06 05:34:32"
+},
+{
+  "Name": "NULL0",
+  "Index": "50",
+  "PhyState": "UP",
+  "ProtocolState": "UP",
+  "Desc": "",
+  "LastPhyUpTime": ""
+}]
+"""

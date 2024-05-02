@@ -1,0 +1,172 @@
+# 条形表数据提取
+"""
+PHY: Physical
+*down: administratively down
+^down: standby
+(l): loopback
+(s): spoofing
+(b): BFD down
+(e): ETHOAM down
+(d): Dampening Suppressed
+(p): port alarm down
+(dl): DLDP down
+(c): CFM down
+InUti/OutUti: input utility rate/output utility rate
+Interface                  PHY      Protocol  InUti OutUti   inErrors  outErrors
+GE1/0/0                    up       up           0%     0%          0          0
+GE1/0/1                    up       up           0%     0%          0          0
+GE1/0/2                    up       up           0%     0%          0          0
+GE1/0/3                    up       up           0%     0%          0          0
+GE1/0/4                    up       up           0%     0%          0          0
+GE1/0/5                    up       up           0%     0%          0          0
+GE1/0/6                    up       up           0%     0%          0          0
+GE1/0/7                    up       up           0%     0%          0          0
+GE1/0/8                    up       up           0%     0%          0          0
+GE1/0/9                    *down    down         0%     0%          0          0
+MEth0/0/0                  up       up           0%     0%          0          0
+NULL0                      up       up(s)        0%     0%          0          0
+"""
+
+# 模版方案一
+"""
+Value Name (GE\d\S+|NULL\S+|MEth\S+)
+Value PhyState (\S+)
+Value ProtocolState (\S+)
+Value InUti (\S+)
+Value OutUti (\S+)
+Value InErrors (\S+)
+Value OutErrors (\S+)
+
+Start
+ ^${Name}\s+${PhyState}\s+${ProtocolState}\s+${InUti}\s+${OutUti}\s+${InErrors}\s+${OutErrors} -> Record
+"""
+
+# 模版方案二
+"""
+Value Name (\S+)
+Value PhyState (\S+)
+Value ProtocolState (\S+)
+Value InUti (\S+)
+Value OutUti (\S+)
+Value InErrors (\S+)
+Value OutErrors (\S+)
+
+Start
+ ^Interface                  PHY      Protocol  InUti OutUti   inErrors  outErrors -> Interface
+
+Interface
+ ^${Name}\s+${PhyState}\s+${ProtocolState}\s+${InUti}\s+${OutUti}\s+${InErrors}\s+${OutErrors} -> Record
+"""
+
+"""
+# 解析结果
+[
+{
+  "Name": "GE1/0/0",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/1",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/2",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/3",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/4",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/5",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/6",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/7",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/8",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "GE1/0/9",
+  "PhyState": "*down",
+  "ProtocolState": "down",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "MEth0/0/0",
+  "PhyState": "up",
+  "ProtocolState": "up",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+},
+{
+  "Name": "NULL0",
+  "PhyState": "up",
+  "ProtocolState": "up(s)",
+  "InUti": "0%",
+  "OutUti": "0%",
+  "InErrors": "0",
+  "OutErrors": "0"
+}]
+"""
