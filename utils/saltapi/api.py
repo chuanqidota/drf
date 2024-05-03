@@ -38,6 +38,18 @@ pillar数据管理
 
 """
 
+"""
+client:
+local等效于 salt 命令
+runner等效于 salt-run 命令
+wheel等效于 通常管理主端资源，例如状态文件、支柱文件、Salt 配置文件
+
+local_async
+runner_async
+wheel_async
+
+"""
+
 
 class SaltAPI:
     def __init__(self, base_url, username, password):
@@ -173,6 +185,42 @@ class SaltAPI:
         res = self.post(params)
         jid = res['return'][0]['jid']
         return jid
+
+    def saltJob(self, jid=''):
+        if jid:
+            prefix = '/jobs/' + jid
+        else:
+            prefix = '/jobs'
+        res = self.post(None, prefix)
+        return res
+
+    def saltMinions(self, minion=''):
+        if minion and minion != '*':
+            prefix = '/minions/' + minion
+        else:
+            prefix = '/minions'
+        res = self.post(None, prefix)
+        return res
+
+    def saltEvents(self):
+        prefix = '/events'
+        res = self.post(None, prefix)
+        return res
+
+    def reject_key(self, node_name):
+        params = {'client': 'wheel', 'fun': 'key.reject', 'match': node_name}
+        content = self.post(params)
+        ret = content['return'][0]['data']['success']
+        return ret
+
+    def listKeys(self):
+        prefix = '/keys'
+        content = self.post(None, prefix)
+        accepted = content['return']['minions']
+        denied = content['return']['minions_denied']
+        unaccept = content['return']['minions_pre']
+        rejected = content['return']['minions_rejected']
+        return accepted, denied, unaccept, rejected
 
     def jobs_all_list(self):
         """
