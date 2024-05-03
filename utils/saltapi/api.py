@@ -2,23 +2,59 @@ from urllib.parse import urljoin
 
 import requests
 
+"""
+官方文档
+https://docs.saltproject.io/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html
+
+
+认证接口
+/login: 用于获取认证令牌，通常需要提供用户名和密码。
+执行命令
+/run: 执行单个命令或模块功能在指定的目标上。
+/cmd: 类似于/run，也用于执行命令，但提供了更详细的参数控制，如异步执行、批量操作等。
+状态管理
+/state: 应用或查询Salt状态，用于配置管理和部署。
+轮询与事件
+/events: 订阅Salt事件总线，监听Salt系统的各种事件。
+/jobs: 查询作业状态和结果。
+目标匹配
+/minions: 列出所有可用的minions。
+/tgt: 测试目标匹配表达式，检查哪些minions将被匹配。
+配置管理
+/config: 管理Salt配置，如获取或更新配置项。
+键管理
+/keys: 管理 minion 的公钥接受或拒绝。
+轮询器（Schedules）管理
+/schedule: 创建、修改或删除定时任务。
+pillar数据管理
+/pillar: 查询或更新Pillar数据。
+** grains 数据管理**
+/grains: 查询或更新Grains信息。
+执行模块功能
+/modules: 直接调用特定的Salt模块功能。
+版本与系统信息
+/version: 获取SaltStack的版本信息。
+/sys: 系统信息和维护操作，如清理缓存等
+
+"""
+
 
 class SaltAPI:
     def __init__(self, base_url, username, password):
         self.base_url = base_url
-        self.token = self.get_token(username, password)
+        self.username = username
+        self.password = password
+        self.token = self.get_token()
 
-    def get_token(self, username, password):
+    def get_token(self):
         """
             通过用户名和密码获取令牌
-        :param username: 用户名
-        :param password: 密码
         :return:
         """
         url = urljoin(self.base_url, "login")
         login_data = {
-            'username': username,
-            'password': password,
+            'username': self.username,
+            'password': self.password,
             'eauth': "pam"
         }
         response = requests.post(url, json=login_data)
