@@ -91,6 +91,7 @@ salt-key -R 拒绝所有
 salt-key -d 删除指定 minion  
 salt-key -D 删除所有
 
+
 """
 
 
