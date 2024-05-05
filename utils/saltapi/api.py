@@ -124,12 +124,12 @@ class SaltAPI:
             通过用户名和密码获取令牌
         :return:
         """
-        login_data = {
+        data = {
             'username': self.username,
             'password': self.password,
             'eauth': "pam"
         }
-        response = requests.post(self.login_url, json=login_data)
+        response = requests.post(self.login_url, json=data)
         token = response.json()['return'][0]['token']
         return token
 
