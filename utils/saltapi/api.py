@@ -1,3 +1,4 @@
+import os
 from urllib.parse import urljoin
 
 import requests
@@ -82,7 +83,6 @@ expr_form: 目标解析形式，默认为glob，也可以是list、pcre、grain�
 
 
 
-
 salt-key -L 列出所有  
 salt-key -a 允许一台 minion  
 salt-key -A 允许所有  
@@ -101,19 +101,35 @@ class SaltAPI:
         self.username = username
         self.password = password
         self.token = self.get_token()
+        self.headers = {"X-Auth-Token": self.token}
+        self.login_url = f"{self.base_url}/login"  # 用于获取认证令牌
+        self.version_url = f"{self.base_url}/version"  # 获取SaltStack的版本信息
+        self.sys_url = f"{self.base_url}/sys"  # 系统信息和维护操作，如清理缓存等
+        self.run_url = f"{self.base_url}/run"  # 执行单个命令或模块功能在指定的目标上
+        self.cmd_url = f"{self.base_url}/cmd"  # 类似于/run，也用于执行命令，但提供了更详细的参数控制，如异步执行、批量操作等
+        self.jobs_url = f"{self.base_url}/jobs"  # 查询作业状态和结果
+        self.events_url = f"{self.base_url}/events"  # 订阅Salt事件总线，监听Salt系统的各种事件
+        self.state_url = f"{self.base_url}/state"  # 应用或查询Salt状态，用于配置管理和部署
+        self.minions_url = f"{self.base_url}/minions"  # 列出所有可用的minions
+        self.tgt_url = f"{self.base_url}/tgt"  # 测试目标匹配表达式，检查哪些minions将被匹配
+        self.config_url = f"{self.base_url}/config"  # 管理Salt配置，如获取或更新配置项。
+        self.keys_url = f"{self.base_url}/keys"  # 管理 minion 的公钥接受或拒绝
+        self.schedule_url = f"{self.base_url}/schedule"  # 创建、修改或删除定时任务
+        self.pillar_url = f"{self.base_url}/pillar"  # 查询或更新Pillar数据
+        self.grains_url = f"{self.base_url}/grains"  # 查询或更新Grains信息
+        self.modules_url = f"{self.base_url}/modules"  # 直接调用特定的Salt模块功能
 
     def get_token(self):
         """
             通过用户名和密码获取令牌
         :return:
         """
-        url = urljoin(self.base_url, "login")
         login_data = {
             'username': self.username,
             'password': self.password,
             'eauth': "pam"
         }
-        response = requests.post(url, json=login_data)
+        response = requests.post(self.login_url, json=login_data)
         token = response.json()['return'][0]['token']
         return token
 
@@ -124,9 +140,8 @@ class SaltAPI:
         :param prefix:
         :return:
         """
-        url = urljoin(self.base_url, prefix)
-        headers = {'X-Auth-Token': self.token}
-        res = requests.post(url, json=data, headers=headers, verify=False)
+        url = f"{self.base_url}{prefix}"
+        res = requests.post(url, json=data, headers=self.headers, verify=False)
         return res.json()
 
     def all_key(self):
