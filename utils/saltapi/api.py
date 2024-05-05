@@ -230,50 +230,12 @@ class SaltAPI:
         jid = res['return'][0]['jid']
         return jid
 
-    def saltJob(self, jid=''):
+    def get_job(self, jid=''):
         if jid:
             prefix = '/jobs/' + jid
         else:
             prefix = '/jobs'
         res = self.__post(None, prefix)
-        return res
-
-    def saltMinions(self, minion=''):
-        if minion and minion != '*':
-            prefix = '/minions/' + minion
-        else:
-            prefix = '/minions'
-        res = self.__post(None, prefix)
-        return res
-
-    def saltEvents(self):
-        prefix = '/events'
-        res = self.__post(None, prefix)
-        return res
-
-    def reject_key(self, node_name):
-        params = {'client': 'wheel', 'fun': 'key.reject', 'match': node_name}
-        content = self.__post(params)
-        ret = content['return'][0]['data']['success']
-        return ret
-
-    def listKeys(self):
-        prefix = '/keys'
-        content = self.__post(None, prefix)
-        accepted = content['return']['minions']
-        denied = content['return']['minions_denied']
-        unaccept = content['return']['minions_pre']
-        rejected = content['return']['minions_rejected']
-        return accepted, denied, unaccept, rejected
-
-    def jobs_all_list(self):
-        """
-        获取所有任务列表的函数
-
-        :return: 返回调用__post方法后的结果
-        """
-        obj = {"client": "runner", "fun": "jobs.list_jobs"}
-        res = self.__post(obj)
         return res
 
     def get_jid_ret(self, jid):
@@ -286,6 +248,44 @@ class SaltAPI:
         res = self.__post(params)
         ret = res['return'][0]
         return ret
+
+    def all_jobs(self):
+        """
+        获取所有任务列表的函数
+
+        :return: 返回调用__post方法后的结果
+        """
+        obj = {"client": "runner", "fun": "jobs.list_jobs"}
+        res = self.__post(obj)
+        return res
+
+    def get_minion(self, minion=''):
+        if minion and minion != '*':
+            prefix = '/minions/' + minion
+        else:
+            prefix = '/minions'
+        res = self.__post(None, prefix)
+        return res
+
+    def get_events(self):
+        prefix = '/events'
+        res = self.__post(None, prefix)
+        return res
+
+    def reject_key(self, node_name):
+        params = {'client': 'wheel', 'fun': 'key.reject', 'match': node_name}
+        content = self.__post(params)
+        ret = content['return'][0]['data']['success']
+        return ret
+
+    def list_keys(self):
+        prefix = '/keys'
+        content = self.__post(None, prefix)
+        accepted = content['return']['minions']
+        denied = content['return']['minions_denied']
+        unaccept = content['return']['minions_pre']
+        rejected = content['return']['minions_rejected']
+        return accepted, denied, unaccept, rejected
 
     def running_jobs(self):
         """
