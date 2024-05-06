@@ -92,6 +92,32 @@ salt-key -d 删除指定 minion
 salt-key -D 删除所有
 
 
+Jobs (执行命令)
+/run: 发送一个命令到Minions，可以是单个Minion或所有Minions。
+/jobs: 获取最近的jobs信息。
+/jobs/{job_id}: 查看特定job的详细信息。
+Grains (获取Minion信息)
+/grains: 获取所有Minions的grains数据。
+/grains/{minion_id}: 获取特定Minion的grains数据。
+Pillar (获取Minion Pillar信息)
+/pillar: 获取所有Minions的pillar数据。
+/pillar/{minion_id}: 获取特定Minion的pillar数据。
+Minions (管理Minions)
+/minions: 获取所有已连接的Minions列表。
+/minions/{minion_id}: 获取关于特定Minion的信息。
+Events (监听Salt事件总线)
+/events: 实时流式传输Salt事件，通常用于实时监控。
+** roster (处理Roster信息)**
+/roster: 获取roster文件中的信息。
+Key Management (管理Minion keys)
+/keys: 列出所有已接受、未接受和拒绝的Minion keys。
+/keys/{accept|reject|delete}/{minion_id}: 接受、拒绝或删除Minion的key。
+Execution Modules (执行模块命令)
+/execute/{minion_id}/{module}: 直接执行指定Minion上的模块命令。
+State Execution (执行状态模块)
+/state/top: 获取当前的top.sls配置。
+/state/highstate: 在一个或多个Minions上应用高阶状态
+
 """
 
 
