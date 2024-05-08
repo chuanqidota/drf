@@ -1,5 +1,4 @@
-import os
-from urllib.parse import urljoin
+import json
 
 import requests
 
@@ -7,82 +6,7 @@ import requests
 官方文档
 https://docs.saltproject.io/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html
 
-
-认证接口
-/login: 用于获取认证令牌，通常需要提供用户名和密码。
-执行命令
-/run: 执行单个命令或模块功能在指定的目标上。
-/cmd: 类似于/run，也用于执行命令，但提供了更详细的参数控制，如异步执行、批量操作等。
-状态管理
-/state: 应用或查询Salt状态，用于配置管理和部署。
-轮询与事件
-/events: 订阅Salt事件总线，监听Salt系统的各种事件。
-/jobs: 查询作业状态和结果。
-目标匹配
-/minions: 列出所有可用的minions。
-/tgt: 测试目标匹配表达式，检查哪些minions将被匹配。
-配置管理
-/config: 管理Salt配置，如获取或更新配置项。
-键管理
-/keys: 管理 minion 的公钥接受或拒绝。
-轮询器（Schedules）管理
-/schedule: 创建、修改或删除定时任务。
-pillar数据管理
-/pillar: 查询或更新Pillar数据。
-** grains 数据管理**
-/grains: 查询或更新Grains信息。
-执行模块功能
-/modules: 直接调用特定的Salt模块功能。
-版本与系统信息
-/version: 获取SaltStack的版本信息。
-/sys: 系统信息和维护操作，如清理缓存等
-
-
-expr_form : tgt的匹配规则
-13     'glob' - Bash glob completion - Default
-14     'pcre' - Perl style regular expression
-15     'list' - Python list of hosts
-16     'grain' - Match based on a grain comparison
-17     'grain_pcre' - Grain comparison with a regex
-18     'pillar' - Pillar data comparison
-19     'nodegroup' - Match on nodegroup
-20     'range' - Use a Range server for matching
-21     'compound' - Pass a compound match string
-"""
-
-"""
-client:
-local等效于 salt 命令
-runner等效于 salt-run 命令
-wheel等效于 通常管理主端资源，例如状态文件、支柱文件、Salt 配置文件
-
-local (local 或 local_client):
-用途: 用于向本地 minions 发送命令，相当于在命令行中使用salt命令。
-示例: 当您希望立即在一组minions上执行一个命令或状态时使用，如执行test.ping检查minions是否在线。
-
-local_async (async_local 或 local_async_client):
-用途: 类似于local，但以异步方式执行命令，不会等待命令完成就返回结果。适用于不需即时反馈的长时间运行任务。
-示例: 执行一个耗时较长的操作，如软件包升级，您可能希望立即得到一个job ID以供后续查询结果
-
-
-runner:
-用途: 调用Master上的Runner模块，这些模块通常用于系统级别的维护和监控，如查看Salt Master的状态、清理job缓存等。
-示例: 查询当前正在运行的jobs。
-
-
-local_async
-runner_async
-wheel_async
-
-
-client: 指定客户端类型，如local（同步）、local_async（异步）等。
-tgt: 目标匹配表达式，可以是minion ID、正则表达式、列表等，根据expr_form确定。
-fun: 要调用的模块函数名称。
-arg: 传递给函数的参数列表。
-expr_form: 目标解析形式，默认为glob，也可以是list、pcre、grain、pillar等，根据目标匹配的需要设置。
-
-
-
+常用命令
 salt-key -L 列出所有  
 salt-key -a 允许一台 minion  
 salt-key -A 允许所有  
@@ -91,33 +15,14 @@ salt-key -R 拒绝所有
 salt-key -d 删除指定 minion  
 salt-key -D 删除所有
 
+salt 'hostname' sys.list_functions cmd # 列出cmd的功能
+salt "hostname" sys.doc cmd # 查询模块
+salt "hostname" sys.doc cmd.run # 查询模块数名
+salt 'hostname' sys.state_doc cmd # 查询state.sls文件写法
 
-Jobs (执行命令)
-/run: 发送一个命令到Minions，可以是单个Minion或所有Minions。
-/jobs: 获取最近的jobs信息。
-/jobs/{job_id}: 查看特定job的详细信息。
-Grains (获取Minion信息)
-/grains: 获取所有Minions的grains数据。
-/grains/{minion_id}: 获取特定Minion的grains数据。
-Pillar (获取Minion Pillar信息)
-/pillar: 获取所有Minions的pillar数据。
-/pillar/{minion_id}: 获取特定Minion的pillar数据。
-Minions (管理Minions)
-/minions: 获取所有已连接的Minions列表。
-/minions/{minion_id}: 获取关于特定Minion的信息。
-Events (监听Salt事件总线)
-/events: 实时流式传输Salt事件，通常用于实时监控。
-** roster (处理Roster信息)**
-/roster: 获取roster文件中的信息。
-Key Management (管理Minion keys)
-/keys: 列出所有已接受、未接受和拒绝的Minion keys。
-/keys/{accept|reject|delete}/{minion_id}: 接受、拒绝或删除Minion的key。
-Execution Modules (执行模块命令)
-/execute/{minion_id}/{module}: 直接执行指定Minion上的模块命令。
-State Execution (执行状态模块)
-/state/top: 获取当前的top.sls配置。
-/state/highstate: 在一个或多个Minions上应用高阶状态
+salt -L 'hostname,hostname2' cmd.run 'df -h' # 执行多台
 
+salt-run jobs.lookup_jid 20240508035728435872 # 查询jid的结果
 """
 
 
@@ -126,24 +31,14 @@ class SaltAPI:
         self.base_url = base_url
         self.username = username
         self.password = password
-        self.token = self.get_token()
-        self.headers = {"X-Auth-Token": self.token}
         self.login_url = f"{self.base_url}/login"  # 用于获取认证令牌
-        self.version_url = f"{self.base_url}/version"  # 获取SaltStack的版本信息
-        self.sys_url = f"{self.base_url}/sys"  # 系统信息和维护操作，如清理缓存等
-        self.run_url = f"{self.base_url}/run"  # 执行单个命令或模块功能在指定的目标上
-        self.cmd_url = f"{self.base_url}/cmd"  # 类似于/run，也用于执行命令，但提供了更详细的参数控制，如异步执行、批量操作等
-        self.jobs_url = f"{self.base_url}/jobs"  # 查询作业状态和结果
-        self.events_url = f"{self.base_url}/events"  # 订阅Salt事件总线，监听Salt系统的各种事件
-        self.state_url = f"{self.base_url}/state"  # 应用或查询Salt状态，用于配置管理和部署
-        self.minions_url = f"{self.base_url}/minions"  # 列出所有可用的minions
-        self.tgt_url = f"{self.base_url}/tgt"  # 测试目标匹配表达式，检查哪些minions将被匹配
-        self.config_url = f"{self.base_url}/config"  # 管理Salt配置，如获取或更新配置项。
-        self.keys_url = f"{self.base_url}/keys"  # 管理 minion 的公钥接受或拒绝
-        self.schedule_url = f"{self.base_url}/schedule"  # 创建、修改或删除定时任务
-        self.pillar_url = f"{self.base_url}/pillar"  # 查询或更新Pillar数据
-        self.grains_url = f"{self.base_url}/grains"  # 查询或更新Grains信息
-        self.modules_url = f"{self.base_url}/modules"  # 直接调用特定的Salt模块功能
+        self.token = self.get_token()
+        self.headers = {"X-Auth-Token": self.token, "Content-Type": "application/json"}
+        self.keys_url = f"{self.base_url}/keys"  # 获取key
+        self.events_url = f"{self.base_url}/events"  # 订阅Salt事件总线，监听Salt系统的各种事件 连接监听
+        self.jobs_url = f"{self.base_url}/jobs"  # 查询作业状态和结果 GET
+        self.run_url = f"{self.base_url}/run"  # 执行单个命令或模块功能在指定的目标上 GET
+        self.minions_url = f"{self.base_url}/minions"  # 列出所有可用的minions GET
 
     def get_token(self):
         """
@@ -159,186 +54,417 @@ class SaltAPI:
         token = response.json()['return'][0]['token']
         return token
 
-    def __post(self, data, prefix='/'):
+    def __get(self, url=None, params=None):
         """
-            发起__post请求
-        :param data:
-        :param prefix:
+            发起get请求
+        :param url:
+        :param params:
         :return:
         """
-        url = f"{self.base_url}{prefix}"
-        res = requests.post(url, json=data, headers=self.headers, verify=False)
-        return res.json()
+        if url and params:
+            res = requests.get(url=url, params=params, headers=self.headers, verify=False).json()
+        elif url and not params:
+            res = requests.get(url=url, headers=self.headers, verify=False).json()
+        else:
+            res = None
+        return res
 
-    def all_key(self):
+    def __post(self, url=None, data=None):
         """
-        获取所有密钥的信息。
-
-        :return: 返回一个包含 minions 和 minions_pre 的元组。
-            minions: 已激活的矿工密钥列表。
-            minions_pre: 未激活的矿工密钥列表。
+            发起post请求
+        :param url:
+        :param data:
+        :return:
         """
-        params = {'client': 'wheel', 'fun': 'key.list_all'}
-        res = self.__post(params)
-        minions = res['return'][0]['data']['return']['minions']
-        minions_pre = res['return'][0]['data']['return']['minions_pre']
-        return minions, minions_pre
+        if url and data:
+            res = requests.post(url, json=data, headers=self.headers, verify=False).json()
+        elif url and not data:
+            res = requests.post(url=url, headers=self.headers, verify=False).json()
+        else:
+            res = None
+        return res
 
-    def delete_key(self, node_name):
+    def common(self, tgt, fun, arg, client='local', expr_form="glob"):
         """
-        删除指定名称的节点密钥。
-
-        :param node_name: 要删除的节点名称，用于匹配删除密钥。
-        :return: 返回一个布尔值，表示删除操作是否成功。
-        """
-
-        params = {'client': 'wheel', 'fun': 'key.delete', 'match': node_name}
-        res = self.__post(params)
-        ret = res['return'][0]['data']['success']
-        return ret
-
-    def accept_key(self, node_name):
-        """
-        接受指定节点的key。
-
-        :param node_name: 需要接受key的节点名称。
-        :return: 返回一个布尔值，表示key接受是否成功。
-        """
-
-        params = {'client': 'wheel', 'fun': 'key.accept', 'match': node_name}
-        res = self.__post(params)
-        ret = res['return'][0]['data']['success']
-        return ret
-
-    def salt_alive(self, tgt):
-        """
-        测试指定目标是否存活。
-
-        :param tgt: 目标标识，可以是主机名、IP地址或标签等，用于指定需要测试的目标。
-        :return: 返回一个布尔值，表示目标是否存活。如果目标存活，返回True；否则返回False。
-        """
-        params = {'client': 'local', 'tgt': tgt, 'fun': 'test.ping'}
-        res = self.__post(params)
-        ret = res['return'][0]
-        return ret
-
-    def run_command(self, tgt, fun, arg):
-        """
-        执行指定的命令
+            通用执行命令
 
         :param tgt: 目标，指定命令执行的主机或主机集合
         :param fun: 函数名，指定要执行的命令
         :param arg: 参数，命令执行时需要的参数
+        :param client:
+            wheel等效于 通常管理主端资源，例如状态文件、支柱文件、Salt 配置文件
+            local：等效于salt命令 这是最基础的客户端，用于在单个Minion上同步执行命令。它等待命令执行完成并返回结果。
+            local_async：异步版本的local客户端，它不等待命令执行完成，而是立即返回一个job ID，可以在稍后查询结果。
+            local_batch：这个客户端允许你以批处理的方式执行命令，例如按批次大小或百分比来分组Minion。
+            local_subset：它允许你选择Minion子集来执行命令，而不是针对所有Minion。
+            runner：等效于salt-run命令Runner客户端用于在Salt Master上执行特定的“runner”模块，这些模块通常是管理Master自身或辅助功能，如清理缓存、管理jobs等。
+            runner_async：异步版本的runner客户端，与local_async类似，它不等待执行完成，而是返回job ID。
+            ssh：SSH客户端允许通过SSH协议在远程主机上执行命令，即使这些主机不是Salt Minion。
+            wheel：Wheel客户端用于与Salt的“wheel”模块交互，这些模块用于管理Salt Master的安全和配置，如添加、删除用户、管理pillar数据等。
+            wheel_async：异步版本的wheel客户端，与前面的异步客户端一样，它不等待执行完成，而是返回job ID
+        :param expr_form:
+                glob 默认,list、pcre、grain、pillar
         :return: 命令执行的结果
         """
-        payload = {
-            'client': 'local',
+        body = {
+            'client': client,
             'tgt': tgt,
             'fun': fun,
-            'arg': arg
+            'arg': arg,
+            'expr_form': expr_form
         }
-        return self.__post(payload)
+        res = self.__post(self.base_url, body)
+        return res
 
-    def salt_state(self, tgt, arg, expr_form):
-        """
-        执行Saltstack的州（state）管理操作。
-
-        通过指定目标（tgt）、参数（arg）和表达式形式（expr_form），来调用Saltstack的local客户端执行指定的州管理命令。
-
-        :param tgt: 目标标识，指定要应用州（state）的Saltstack Minion。可以是主机名、IP地址或标签等。
-        :param arg: 传递给州（state）的参数。通常包括州ID或一组州ID。
-        :param expr_form: 表达式形式，指定如何解释tgt参数。例如，'glob'、'pcre'、'list'等。
-        :return: 返回执行州（state）管理操作的结果。结果是一个字典，包含执行详情和结果。
-
-        例如，可能返回某个Minion应用指定州后的结果状态。
-        """
-        params = {'client': 'local', 'tgt': tgt, 'fun': 'state.sls', 'arg': arg, 'expr_form': expr_form}
-        res = self.__post(params)
-        ret = res['return'][0]
-        return ret
-
-    def async_exec(self, tgt, fun, arg):
+    def async_common(self, tgt, fun, arg, client='local_async', expr_form="glob"):
         """
            异步执行指定的函数
 
        :param tgt: 目标，指定要执行函数的主机或主机集合
        :param fun: 要执行的函数名
        :param arg: 函数参数，可以是单个参数或参数列表
+       :param client:
+       :param expr_form: glob 默认,list、pcre、grain、pillar
        :return: 返回一个作业ID（JID），该ID用于标识异步执行的作业
        """
-        params = {'client': 'local_async', 'tgt': tgt, 'fun': fun, 'arg': arg, 'expr_form': 'list'}
-        res = self.__post(params)
+        body = {
+            'client': client,
+            'tgt': tgt,
+            'fun': fun,
+            'arg': arg,
+            'expr_form': expr_form
+        }
+        res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
         return jid
 
-    def get_job(self, jid=''):
-        if jid:
-            prefix = '/jobs/' + jid
-        else:
-            prefix = '/jobs'
-        res = self.__post(None, prefix)
+    def get_events(self):
+        """
+            时间监听
+        :return:
+        """
+        while True:
+            response = requests.get(url=self.events_url, headers=self.headers, stream=True)
+            for line in response.iter_lines():
+                # 忽略空行
+                if line:
+                    event = line.decode('utf-8')
+                    if event.startswith('data:'):
+                        # 解析事件数据
+                        event_data = json.loads(event[5:])
+                        print(event_data)
+
+    def get_all_minions_info(self):
+        """
+            获取所有的minions信息
+            机器的详细信息
+        :return:
+        """
+        res = self.__get(self.minions_url)
         return res
 
-    def get_jid_ret(self, jid):
+    def get_minion_info(self, minion):
+        """
+            获取单个的minion信息
+        :param minion: 支持正则 local*
+        :return:
+        """
+        url = f'{self.minions_url}/{minion}'
+        res = self.__get(url)
+        return res
+
+    def get_keys1(self):
+        """
+            获取所有keys
+        :return:
+            {
+              "local": [
+                "master.pem",
+                "master.pub"
+              ],
+              "minions": [
+                "localhost"
+              ],
+              "minions_denied": [],
+              "minions_pre": [
+                "10-10-0-193"
+              ],
+              "minions_rejected": []
+            }
+        """
+        res = self.__get(self.keys_url)
+        return res.get("return")
+
+    def get_keys2(self):
+        """
+            获取所有密钥的信息。
+        :return:
+            {
+              "local": [
+                "master.pem",
+                "master.pub"
+              ],
+              "minions": [
+                "localhost"
+              ],
+              "minions_denied": [],
+              "minions_pre": [
+                "10-10-0-193"
+              ],
+              "minions_rejected": []
+            }
+        """
+        body = {'client': 'wheel', 'fun': 'key.list_all'}
+        res = self.__post(self.base_url, body)
+        res = res['return'][0]['data']['return']
+        return res
+
+    def accept_key(self, minion_id):
+        """
+            接受指定节点的key。
+            操作范围 minions_pre
+        :param minion_id: 需要接受key的节点名称。
+        :return: 返回一个布尔值，表示key接受是否成功。
+        """
+
+        body = {'client': 'wheel', 'fun': 'key.accept', 'match': minion_id}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]['data']['success']
+        return ret
+
+    def reject_key(self, minion_id):
+        """
+            拒绝
+            操作范围:minions_pre
+        :param minion_id:
+        :return:
+        """
+        body = {'client': 'wheel', 'fun': 'key.reject', 'match': minion_id}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]['data']['success']
+        return ret
+
+    def delete_key(self, minion_id):
+        """
+            删除指定名称的节点密钥。只能重启
+            范围:所有的都可以删除
+        :param minion_id: 要删除的节点名称，用于匹配删除密钥。
+        :return: 返回一个布尔值，表示删除操作是否成功。
+        """
+        body = {'client': 'wheel', 'fun': 'key.delete', 'match': minion_id}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]['data']['success']
+        return ret
+
+    def ping_minion(self, minion):
+        """
+        测试指定目标是否存活。
+        :param minion:
+        :return: {'localhost': True}
+        """
+        body = {'client': 'local', 'tgt': minion, 'fun': 'test.ping'}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]
+        return ret
+
+    def cmd_run(self, minion, cmd):
+        """
+            执行基础的bash命令
+        :param minion:
+        :param cmd:
+        :return:
+        """
+        body = {'client': 'local', 'tgt': minion, 'fun': 'cmd.run', 'arg': cmd}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]
+        return ret
+
+    def state_sls(self, minion, arg):
+        """
+            执行state_sls
+        :param minion: minion
+        :param arg: sls文件path salt-master 配置文件
+            file_roots:
+               base:
+                 - /srv/salt
+                 # 这里在下面创建文件 比如 /srv/salt/init
+                 # 创建 nginx.sls文件
+                 # 然后命令就是 salt '*' state.sls init.nginx  这里的init.nginx就是路径
+               dev:
+                - /srv/salt-dev
+                    :return: 返回执行州（state）管理操作的结果。结果是一个字典，包含执行详情和结果。
+        """
+        body = {'client': 'local', 'tgt': minion, 'fun': 'state.sls', 'arg': arg}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]
+        return ret
+
+    def async_cmd_run(self, minion, cmd):
+        """
+            异步执行cmd命令
+        :param minion:
+        :param cmd:
+        :return:
+        """
+        body = {'client': 'local_async', 'tgt': minion, 'fun': "cmd.run", 'arg': cmd}
+        res = self.__post(self.base_url, body)
+        jid = res['return'][0]['jid']
+        return jid
+
+    def async_state_sls(self, minion, arg):
+        """
+            异步执行 sls文件
+        :param minion:
+        :param arg:
+        :return:
+        """
+        body = {'client': 'local_async', 'tgt': minion, 'fun': 'state.sls', 'arg': arg}
+        res = self.__post(self.base_url, body)
+        jid = res['return'][0]['jid']
+        return jid
+
+    def get_all_jobs1(self):
+        """
+            查询所有的jobs
+        :return:
+             [
+                {
+                    "20240508035728435872": {
+                        "Function": "test.ping",
+                        "Arguments": [],
+                        "Target": "*",
+                        "Target-type": "glob",
+                        "User": "root",
+                        "StartTime": "2024, May 08 03:57:28.435872"
+                    },
+                    "20240508072238680784": {
+                        "Function": "cmd.run",
+                        "Arguments": [
+                            "cmd.cmd_run"
+                        ],
+                        "Target": "*",
+                        "Target-type": "glob",
+                        "User": "root",
+                        "StartTime": "2024, May 08 07:22:38.680784"
+                    }
+                }
+            ]
+        """
+        res = self.__get(self.jobs_url)
+        return res.get("return", [])
+
+    def get_all_jobs2(self):
+        """
+        获取所有任务列表的函数
+        :return:
+            [
+                {
+                    "20240508035728435872": {
+                        "Function": "test.ping",
+                        "Arguments": [],
+                        "Target": "*",
+                        "Target-type": "glob",
+                        "User": "root",
+                        "StartTime": "2024, May 08 03:57:28.435872"
+                    },
+                    "20240508072238680784": {
+                        "Function": "cmd.run",
+                        "Arguments": [
+                            "cmd.cmd_run"
+                        ],
+                        "Target": "*",
+                        "Target-type": "glob",
+                        "User": "root",
+                        "StartTime": "2024, May 08 07:22:38.680784"
+                    }
+                }
+            ]
+        """
+        body = {"client": "runner", "fun": "jobs.list_jobs"}
+        res = self.__post(self.base_url, body)
+        return res.get("return", [])
+
+    def get_job_res1(self, jid):
+        """
+            获取job详情
+        :param jid:
+        :return:
+            res结果
+            {
+                "info": [
+                    {
+                        "jid": "20240508035728435872",
+                        "Function": "test.ping",
+                        "Arguments": [],
+                        "Target": "*",
+                        "Target-type": "glob",
+                        "User": "root",
+                        "Minions": [
+                            "localhost"
+                        ],
+                        "StartTime": "2024, May 08 03:57:28.435872",
+                        "Result": {
+                            "localhost": {
+                                "return": true,
+                                "retcode": 0,
+                                "success": true
+                            }
+                        }
+                    }
+                ],
+                "return": [
+                    {
+                        "localhost": true
+                    }
+                ]
+            }
+        """
+        url = f"{self.jobs_url}/{jid}"
+        res = self.__get(url)
+        return res["return"][0]
+
+    def get_job_res2(self, jid):
         """
             通过jid获取执行结果
         :param jid: jobid
         :return: 结果
+            {'localhost': True}
         """
-        params = {'client': 'runner', 'fun': 'jobs.lookup_jid', 'jid': jid}
-        res = self.__post(params)
+        body = {'client': 'runner', 'fun': 'jobs.lookup_jid', 'jid': jid}
+        res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
 
-    def all_jobs(self):
-        """
-        获取所有任务列表的函数
-
-        :return: 返回调用__post方法后的结果
-        """
-        obj = {"client": "runner", "fun": "jobs.list_jobs"}
-        res = self.__post(obj)
-        return res
-
-    def get_minion(self, minion=''):
-        if minion and minion != '*':
-            prefix = '/minions/' + minion
-        else:
-            prefix = '/minions'
-        res = self.__post(None, prefix)
-        return res
-
-    def get_events(self):
-        prefix = '/events'
-        res = self.__post(None, prefix)
-        return res
-
-    def reject_key(self, node_name):
-        params = {'client': 'wheel', 'fun': 'key.reject', 'match': node_name}
-        content = self.__post(params)
-        ret = content['return'][0]['data']['success']
-        return ret
-
-    def list_keys(self):
-        prefix = '/keys'
-        content = self.__post(None, prefix)
-        accepted = content['return']['minions']
-        denied = content['return']['minions_denied']
-        unaccept = content['return']['minions_pre']
-        rejected = content['return']['minions_rejected']
-        return accepted, denied, unaccept, rejected
-
-    def running_jobs(self):
+    def get_running_jobs(self):
         """
             获取运行中的任务
-        :return: 任务结果
+        :return:
+            {'20240508075514416427': {'Function': 'state.sls', 'Arguments': ['cmd.cmd_run'], 'Target': 'localhost', 'Target-type': 'glob', 'User': 'saltapi', 'StartTime': '2024, May 08 07:55:14.416427', 'Running': [{'localhost': 1124}], 'Returned': []}}
         """
-        params = {'client': 'runner', 'fun': 'jobs.active'}
-        res = self.__post(params)
+        body = {'client': 'runner', 'fun': 'jobs.active'}
+        res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
 
 
 # 使用示例
 if __name__ == "__main__":
-    pass
+    _base_url = "http://10.10.0.193:8090"
+    _username = "saltapi"
+    _password = "python"
+    s = SaltAPI(_base_url, _username, _password)
+    _minion_id = "localhost"
+    # print(s.get_keys2())
+    # # print(s.delete_key(_minion_id))
+    # print(s.accept_key(_minion_id))
+    # print(s.reject_key(_minion_id))
+    # print(s.get_keys2())
+    # print(s.reject_key(_minion_id))
+
+    # print(s.ping_minion(_minion_id))
+    # s.get_events()
+    # _jid = s.async_state_sls(_minion_id, 'cmd.cmd_run')
+    # print(_jid)
+    print(s.get_job_res1('20240508082916957794'))
+    # {'localhost': ['The function "state.sls" is running as PID 4403 and was started at 2024, May 08 08:29:16.957794 with jid 20240508082916957794']}
+    # {'localhost': {'cmd_|-run_command_|-sleep 60 && echo "Hello, World!"_|-run': {'name': 'sleep 60 && echo "Hello, World!"', 'changes': {'pid': 4487, 'retcode': 0, 'stdout': 'Hello, World!', 'stderr': ''}, 'result': True, 'comment': 'Command "sleep 60 && echo "Hello, World!"" run', '__sls__': 'cmd.cmd_run', '__run_num__': 0, 'start_time': '16:29:17.454992', 'duration': 60012.141, '__id__': 'run_command'}}}
