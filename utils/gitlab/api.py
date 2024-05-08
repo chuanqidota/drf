@@ -390,6 +390,25 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         project.delete()
+    
+    def create_project_member(self, project_id, user_id, access_level):
+        """
+            项目操作>创建项目成员
+        :param project_id: 项目id
+        :param user_id: 用户id
+        :param access_level: 权限级别
+            NO_ACCESS: int = 0
+            MINIMAL_ACCESS: int = 5
+            GUEST: int = 10
+            REPORTER: int = 20
+            DEVELOPER: int = 30
+            MAINTAINER: int = 40
+            OWNER: int = 50
+            ADMIN: int = 60
+        :return:
+        """
+        project = self.get_project(project_id)
+        return project.members.create({"user_id": user_id, "access_level": access_level})
 
     def create_branch(self, project_id, branch_name, ref):
         """
