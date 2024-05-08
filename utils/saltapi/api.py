@@ -2,6 +2,8 @@ import json
 
 import requests
 
+from salt.utils.event import SaltEvent
+
 """
 官方文档
 https://docs.saltproject.io/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html
@@ -27,7 +29,7 @@ salt-run jobs.lookup_jid 20240508035728435872 # 查询jid的结果
 
 
 class SaltAPI:
-    def __init__(self, base_url, username, password):
+    def __init__(self, base_url, username, password, tcp_url):
         self.base_url = base_url
         self.username = username
         self.password = password
@@ -39,6 +41,8 @@ class SaltAPI:
         self.jobs_url = f"{self.base_url}/jobs"  # 查询作业状态和结果 GET
         self.run_url = f"{self.base_url}/run"  # 执行单个命令或模块功能在指定的目标上 GET
         self.minions_url = f"{self.base_url}/minions"  # 列出所有可用的minions GET
+
+        self.tcp_url = tcp_url
 
     def get_token(self):
         """
@@ -176,6 +180,40 @@ class SaltAPI:
                         # 解析事件数据
                         event_data = json.loads(event[5:])
                         print(event_data)
+
+    def salt_events(self, jid, minions):
+        """
+            salt事件，
+            触发回调函数
+        :param jid:
+        :param minions:
+        :return:
+        """
+        event = SaltEvent(self.tcp_url, opts={
+            # 'sock_dir': '/var/run/salt/master',  # 这一行在连接远程Master时不需要
+            'transport': 'tcp',
+            'auth': {'token': self.token}  # 根据实际情况添加认证信息
+        })
+        completed_minions = set()
+        while True:
+            event_data = event.get_event(full=True)
+            if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/ret/'):
+                minion_id = event_data['data']['id']
+                success = event_data['data'].get('success', False)
+                if success:
+                    self.event_backup(jid, minion_id, success)
+                    completed_minions.add(minion_id)
+                if len(completed_minions) == len(minions):
+                    break
+    def event_backup(self, jid, minion, result):
+        """
+            事件回调 继承后重写这个函数
+        :param jid:
+        :param minion:
+        :param result:
+        :return:
+        """
+        print(jid, minion, result)
 
     def get_all_minions_info(self):
         """
@@ -508,3 +546,5 @@ if __name__ == "__main__":
     print(s.get_job_res1('20240508082916957794'))
     # {'localhost': ['The function "state.sls" is running as PID 4403 and was started at 2024, May 08 08:29:16.957794 with jid 20240508082916957794']}
     # {'localhost': {'cmd_|-run_command_|-sleep 60 && echo "Hello, World!"_|-run': {'name': 'sleep 60 && echo "Hello, World!"', 'changes': {'pid': 4487, 'retcode': 0, 'stdout': 'Hello, World!', 'stderr': ''}, 'result': True, 'comment': 'Command "sleep 60 && echo "Hello, World!"" run', '__sls__': 'cmd.cmd_run', '__run_num__': 0, 'start_time': '16:29:17.454992', 'duration': 60012.141, '__id__': 'run_command'}}}
+
+    _tcp_url = "tcp://10.10.0.193:4510"
