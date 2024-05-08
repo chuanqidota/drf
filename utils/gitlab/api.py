@@ -157,6 +157,14 @@ class GitLabManager:
         :param group_id: 组id
         :param user_id: 用户id
         :param access_level: 权限级别
+            NO_ACCESS: int = 0
+            MINIMAL_ACCESS: int = 5
+            GUEST: int = 10
+            REPORTER: int = 20
+            DEVELOPER: int = 30
+            MAINTAINER: int = 40
+            OWNER: int = 50
+            ADMIN: int = 60
         :return:
         """
         group = self.get_group(group_id)
