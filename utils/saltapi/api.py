@@ -84,7 +84,7 @@ class SaltAPI:
             res = None
         return res
 
-    def common(self, tgt, fun, arg, client='local', expr_form="glob"):
+    def common(self, tgt, fun, arg, client='local', tgt_type="glob"):
         """
             通用执行命令
 
@@ -102,8 +102,31 @@ class SaltAPI:
             ssh：SSH客户端允许通过SSH协议在远程主机上执行命令，即使这些主机不是Salt Minion。
             wheel：Wheel客户端用于与Salt的“wheel”模块交互，这些模块用于管理Salt Master的安全和配置，如添加、删除用户、管理pillar数据等。
             wheel_async：异步版本的wheel客户端，与前面的异步客户端一样，它不等待执行完成，而是返回job ID
-        :param expr_form:
-                glob 默认,list、pcre、grain、pillar
+        :param tgt_type:
+                glob (默认)：
+                使用 Bash 风格的通配符匹配 Minion ID。
+                示例：'*' 匹配所有 Minions，'web*' 匹配以 "web" 开头的 Minions。
+                pcre：
+                使用 Perl 风格的正则表达式匹配 Minion ID。
+                示例：'^web[0-9]+\.example\.com$' 匹配形如 "webX.example.com" 的 Minions。
+                list：
+                使用 Python 列表来指定确切的 Minion ID。
+                示例：['minion1', 'minion2'] 直接指定要影响的 Minions。
+                grain：
+                根据 Minion 的 grains（元数据）来进行匹配。
+                示例：'os:Ubuntu' 匹配 grains 中 os 字段值为 "Ubuntu" 的 Minions。
+                pillar：
+                基于 Minion 的 pillars（静态配置数据）进行匹配。
+                示例：'roles:database' 匹配 pillar 中有 roles 字段且值为 "database" 的 Minions。
+                ipcidr：
+                使用 IP 网络地址和子网掩码来匹配 Minions。
+                示例：'192.168.1.0/24' 匹配属于该子网的 Minions。
+                range：
+                使用 Salt 的 range matcher，基于 Minion ID 的序号。
+                示例：'10-20' 匹配 ID 从 "minion10" 到 "minion20" 的 Minions。
+                compound：
+                使用复杂的组合匹配，可以结合多种匹配方式。
+                示例：'G@os:Ubuntu and S@roles:database' 匹配既是 Ubuntu 操作系统的又具有数据库角色的 Minions
         :return: 命令执行的结果
         """
         body = {
@@ -111,12 +134,12 @@ class SaltAPI:
             'tgt': tgt,
             'fun': fun,
             'arg': arg,
-            'expr_form': expr_form
+            'tgt_type': tgt_type
         }
         res = self.__post(self.base_url, body)
         return res
 
-    def async_common(self, tgt, fun, arg, client='local_async', expr_form="glob"):
+    def async_common(self, tgt, fun, arg, client='local_async', tgt_type="glob"):
         """
            异步执行指定的函数
 
@@ -132,7 +155,7 @@ class SaltAPI:
             'tgt': tgt,
             'fun': fun,
             'arg': arg,
-            'expr_form': expr_form
+            'tgt_type': tgt_type
         }
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
@@ -256,32 +279,35 @@ class SaltAPI:
         ret = res['return'][0]['data']['success']
         return ret
 
-    def ping_minion(self, minion):
+    def ping_minion(self, minion, tgt_type="glob"):
         """
         测试指定目标是否存活。
         :param minion:
+        :param tgt_type: 如果为list minion为列表
         :return: {'localhost': True}
         """
-        body = {'client': 'local', 'tgt': minion, 'fun': 'test.ping'}
+        body = {'client': 'local', 'tgt': minion, 'fun': 'test.ping', 'tgt_type': tgt_type}
         res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
 
-    def cmd_run(self, minion, cmd):
+    def cmd_run(self, minion, cmd, tgt_type="glob"):
         """
             执行基础的bash命令
         :param minion:
         :param cmd:
+        :param tgt_type:
         :return:
         """
-        body = {'client': 'local', 'tgt': minion, 'fun': 'cmd.run', 'arg': cmd}
+        body = {'client': 'local', 'tgt': minion, 'fun': 'cmd.run', 'arg': cmd, 'tgt_type': tgt_type}
         res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
 
-    def state_sls(self, minion, arg):
+    def state_sls(self, minion, arg, tgt_type="glob"):
         """
             执行state_sls
+        :param minion: minion
         :param minion: minion
         :param arg: sls文件path salt-master 配置文件
             file_roots:
@@ -293,32 +319,35 @@ class SaltAPI:
                dev:
                 - /srv/salt-dev
                     :return: 返回执行州（state）管理操作的结果。结果是一个字典，包含执行详情和结果。
+        :param minion: tgt_type
         """
-        body = {'client': 'local', 'tgt': minion, 'fun': 'state.sls', 'arg': arg}
+        body = {'client': 'local', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type}
         res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
 
-    def async_cmd_run(self, minion, cmd):
+    def async_cmd_run(self, minion, cmd, tgt_type="glob"):
         """
             异步执行cmd命令
         :param minion:
         :param cmd:
+        :param tgt_type:
         :return:
         """
-        body = {'client': 'local_async', 'tgt': minion, 'fun': "cmd.run", 'arg': cmd}
+        body = {'client': 'local_async', 'tgt': minion, 'fun': "cmd.run", 'arg': cmd, 'tgt_type': tgt_type}
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
         return jid
 
-    def async_state_sls(self, minion, arg):
+    def async_state_sls(self, minion, arg, tgt_type="glob"):
         """
             异步执行 sls文件
         :param minion:
         :param arg:
+        :param tgt_type:
         :return:
         """
-        body = {'client': 'local_async', 'tgt': minion, 'fun': 'state.sls', 'arg': arg}
+        body = {'client': 'local_async', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type}
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
         return jid
@@ -442,6 +471,17 @@ class SaltAPI:
             {'20240508075514416427': {'Function': 'state.sls', 'Arguments': ['cmd.cmd_run'], 'Target': 'localhost', 'Target-type': 'glob', 'User': 'saltapi', 'StartTime': '2024, May 08 07:55:14.416427', 'Running': [{'localhost': 1124}], 'Returned': []}}
         """
         body = {'client': 'runner', 'fun': 'jobs.active'}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]
+        return ret
+
+    def check_job_result(self, jid):
+        """
+            检查某个job是否已执行并成功退出
+        :param jid:
+        :return:
+        """
+        body = {'client': 'runner', 'fun': 'jobs.exit_success', 'jid': jid}
         res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
