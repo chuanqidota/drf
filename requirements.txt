@@ -36,3 +36,4 @@ ansible-base==2.10.17
 ansible-runner==2.3.6
 pymysql==1.1.0
 kubernetes==29.0.0
+salt==3007.0
