@@ -2,7 +2,7 @@ import json
 
 import requests
 
-from salt.utils.event import SaltEvent
+from salt.utils.event import SaltEvent, MasterEvent
 
 """
 官方文档
@@ -29,20 +29,18 @@ salt-run jobs.lookup_jid 20240508035728435872 # 查询jid的结果
 
 
 class SaltAPI:
-    def __init__(self, base_url, username, password, tcp_url):
+    def __init__(self, base_url, username, password):
         self.base_url = base_url
         self.username = username
         self.password = password
         self.login_url = f"{self.base_url}/login"  # 用于获取认证令牌
-        self.token = self.get_token()
+        self.token = self.get_token()  # token
         self.headers = {"X-Auth-Token": self.token, "Content-Type": "application/json"}
         self.keys_url = f"{self.base_url}/keys"  # 获取key
         self.events_url = f"{self.base_url}/events"  # 订阅Salt事件总线，监听Salt系统的各种事件 连接监听
         self.jobs_url = f"{self.base_url}/jobs"  # 查询作业状态和结果 GET
         self.run_url = f"{self.base_url}/run"  # 执行单个命令或模块功能在指定的目标上 GET
         self.minions_url = f"{self.base_url}/minions"  # 列出所有可用的minions GET
-
-        self.tcp_url = tcp_url
 
     def get_token(self):
         """
@@ -151,7 +149,8 @@ class SaltAPI:
        :param fun: 要执行的函数名
        :param arg: 函数参数，可以是单个参数或参数列表
        :param client:
-       :param expr_form: glob 默认,list、pcre、grain、pillar
+       :param tgt_type:
+
        :return: 返回一个作业ID（JID），该ID用于标识异步执行的作业
        """
         body = {
@@ -165,55 +164,71 @@ class SaltAPI:
         jid = res['return'][0]['jid']
         return jid
 
-    def get_events(self):
+    def api_get_events(self, jid, minions):
         """
-            时间监听
+            接口方式监听事件
+            执行异步任务传入jid和minions 事件进行回调去处理结果
+        :param jid:
+        :param minions: 列表
         :return:
         """
+        completed_minions = set()
         while True:
             response = requests.get(url=self.events_url, headers=self.headers, stream=True)
             for line in response.iter_lines():
                 # 忽略空行
                 if line:
                     event = line.decode('utf-8')
-                    if event.startswith('data:'):
-                        # 解析事件数据
-                        event_data = json.loads(event[5:])
-                        print(event_data)
+                    event_data = json.loads(event[5:]) if event.startswith('data:') else None
+                    if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/ret/'):
+                        minion_id = event_data['data']['id']
+                        success = event_data['data'].get('success', False)
+                        stdout = dict(list(event_data['data']['return'].values())[0]).get("changes", {}).get("stdout")
+                        stderr = dict(list(event_data['data']['return'].values())[0]).get("changes", {}).get("stderr")
+                        if success:
+                            self.event_backup(jid, minion_id, success, stdout, stderr)
+                            completed_minions.add(minion_id)
+                        if len(completed_minions) == len(minions):
+                            break
+            break
 
-    def salt_events(self, jid, minions):
+    def master_get_events(self, jid, minions):
         """
-            salt事件，
-            触发回调函数
+            master节点事件监听
+            执行异步任务传入jid和minions 事件进行回调去处理结果
         :param jid:
-        :param minions:
+        :param minions: 列表
         :return:
         """
-        event = SaltEvent(self.tcp_url, opts={
-            # 'sock_dir': '/var/run/salt/master',  # 这一行在连接远程Master时不需要
-            'transport': 'tcp',
-            'auth': {'token': self.token}  # 根据实际情况添加认证信息
-        })
         completed_minions = set()
         while True:
-            event_data = event.get_event(full=True)
-            if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/ret/'):
-                minion_id = event_data['data']['id']
-                success = event_data['data'].get('success', False)
-                if success:
-                    self.event_backup(jid, minion_id, success)
-                    completed_minions.add(minion_id)
-                if len(completed_minions) == len(minions):
-                    break
-    def event_backup(self, jid, minion, result):
+            event = MasterEvent("/var/run/salt/master")
+            event_data = event.iter_events(full=True)
+            for item in event_data:
+                if item and item.get('tag').startswith(f'salt/job/{jid}/ret/'):
+                    minion_id = item['data']['id']
+                    success = item['data'].get('success', False)
+                    stdout = dict(list(item['data']['return'].values())[0]).get("changes", {}).get("stdout")
+                    stderr = dict(list(item['data']['return'].values())[0]).get("changes", {}).get("stderr")
+                    if success:
+                        self.event_backup(jid, minion_id, success, stdout, stderr)
+                        completed_minions.add(minion_id)
+                    if len(completed_minions) == len(minions):
+                        break
+            break
+
+    @staticmethod
+    def event_backup(jid, minion, success, stdout, stderr):
         """
             事件回调 继承后重写这个函数
         :param jid:
         :param minion:
-        :param result:
+        :param success:
+        :param stdout:
+        :param stderr:
         :return:
         """
-        print(jid, minion, result)
+        print(jid, minion, success, stdout, stderr)
 
     def get_all_minions_info(self):
         """
@@ -321,7 +336,7 @@ class SaltAPI:
         """
         测试指定目标是否存活。
         :param minion:
-        :param tgt_type: 如果为list minion为列表
+        :param tgt_type: 如果为list minion为列表 为批量
         :return: {'localhost': True}
         """
         body = {'client': 'local', 'tgt': minion, 'fun': 'test.ping', 'tgt_type': tgt_type}
@@ -334,7 +349,7 @@ class SaltAPI:
             执行基础的bash命令
         :param minion:
         :param cmd:
-        :param tgt_type:
+        :param tgt_type: 如果为list minion为列表 为批量
         :return:
         """
         body = {'client': 'local', 'tgt': minion, 'fun': 'cmd.run', 'arg': cmd, 'tgt_type': tgt_type}
@@ -346,7 +361,6 @@ class SaltAPI:
         """
             执行state_sls
         :param minion: minion
-        :param minion: minion
         :param arg: sls文件path salt-master 配置文件
             file_roots:
                base:
@@ -357,7 +371,7 @@ class SaltAPI:
                dev:
                 - /srv/salt-dev
                     :return: 返回执行州（state）管理操作的结果。结果是一个字典，包含执行详情和结果。
-        :param minion: tgt_type
+        :param tgt_type: tgt_type 如果为list minion为列表 为批量
         """
         body = {'client': 'local', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type}
         res = self.__post(self.base_url, body)
@@ -369,7 +383,7 @@ class SaltAPI:
             异步执行cmd命令
         :param minion:
         :param cmd:
-        :param tgt_type:
+        :param tgt_type: tgt_type 如果为list minion为列表 为批量
         :return:
         """
         body = {'client': 'local_async', 'tgt': minion, 'fun': "cmd.run", 'arg': cmd, 'tgt_type': tgt_type}
@@ -381,11 +395,53 @@ class SaltAPI:
         """
             异步执行 sls文件
         :param minion:
-        :param arg:
-        :param tgt_type:
+        :param arg: 文件地址-相对地址
+        :param tgt_type: tgt_type 如果为list minion为列表 为批量
         :return:
         """
         body = {'client': 'local_async', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type}
+        res = self.__post(self.base_url, body)
+        jid = res['return'][0]['jid']
+        return jid
+
+    def exec_pillar(self, minion, arg, tgt_type="glob", **kwargs):
+        """
+            执行pillar
+        :param minion:
+        :param arg:
+        :param tgt_type:
+        :param kwargs: pillar相关参数 字典
+        :return:
+        """
+        body = {
+            'client': 'local',
+            'tgt': minion,
+            'fun': 'state.sls',
+            'arg': arg,
+            'tgt_type': tgt_type,
+            'kwarg': {'pillar': kwargs},
+        }
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]
+        return ret
+
+    def async_exec_pillar(self, minion, arg, tgt_type="glob", **kwargs):
+        """
+            异步执行pillar
+        :param minion:
+        :param arg:
+        :param tgt_type:
+        :param kwargs:
+        :return:
+        """
+        body = {
+            'client': 'local_async',
+            'tgt': minion,
+            'fun': 'state.sls',
+            'arg': arg,
+            'tgt_type': tgt_type,
+            'kwarg': {'pillar': kwargs},
+        }
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
         return jid
@@ -517,34 +573,46 @@ class SaltAPI:
         """
             检查某个job是否已执行并成功退出
         :param jid:
-        :return:
+        :return True成功退出，False没有成功退出
         """
         body = {'client': 'runner', 'fun': 'jobs.exit_success', 'jid': jid}
         res = self.__post(self.base_url, body)
+        print("res:", res)
         ret = res['return'][0]
-        return ret
+        return False if ret else True
 
 
 # 使用示例
 if __name__ == "__main__":
+    """
+        /srv/salt/cmd/cmd_run.sls
+        run_command:
+          cmd.run:
+            - name: sleep 5 && echo "Hello, World!"
+        
+        /srv/salt/cmd/pillar_demo.sls
+        {% set my_param = salt['pillar.get']('version', 'default_value') %}
+        pillar_test:
+          cmd.run:
+            - name: echo {{ my_param }}
+    """
+
     _base_url = "http://10.10.0.193:8090"
     _username = "saltapi"
     _password = "python"
     s = SaltAPI(_base_url, _username, _password)
-    _minion_id = "localhost"
+    _minion_id = ["localhost", "localhost1"]
     # print(s.get_keys2())
     # # print(s.delete_key(_minion_id))
     # print(s.accept_key(_minion_id))
     # print(s.reject_key(_minion_id))
     # print(s.get_keys2())
     # print(s.reject_key(_minion_id))
-
-    # print(s.ping_minion(_minion_id))
-    # s.get_events()
-    # _jid = s.async_state_sls(_minion_id, 'cmd.cmd_run')
+    # print(s.ping_minion(_minion_id, "list"))
+    # _jid = s.async_state_sls(_minion_id, 'cmd.cmd_run', "list")
     # print(_jid)
-    print(s.get_job_res1('20240508082916957794'))
-    # {'localhost': ['The function "state.sls" is running as PID 4403 and was started at 2024, May 08 08:29:16.957794 with jid 20240508082916957794']}
-    # {'localhost': {'cmd_|-run_command_|-sleep 60 && echo "Hello, World!"_|-run': {'name': 'sleep 60 && echo "Hello, World!"', 'changes': {'pid': 4487, 'retcode': 0, 'stdout': 'Hello, World!', 'stderr': ''}, 'result': True, 'comment': 'Command "sleep 60 && echo "Hello, World!"" run', '__sls__': 'cmd.cmd_run', '__run_num__': 0, 'start_time': '16:29:17.454992', 'duration': 60012.141, '__id__': 'run_command'}}}
+    # s.api_get_events(_jid, [_minion_id])
+    # print(s.check_job_result(_jid))
+    # print(s.get_running_jobs())
 
-    _tcp_url = "tcp://10.10.0.193:4510"
+    print(s.exec_pillar("localhost", "cmd.pillar_demo", **{"version": "aaaa"}))
