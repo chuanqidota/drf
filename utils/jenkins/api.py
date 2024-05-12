@@ -34,6 +34,7 @@ class JenkinsApi:
     """
     jenkins api 封装
     """
+
     def __init__(self, job_name=None):
         self.jen_cli = jenkins.Jenkins(settings.JENKINS_URL, username=settings.JENKINS_USERNAME,
                                        password=settings.JENKINS_PASSWORD, use_crumb=False, timeout=60)
@@ -87,3 +88,165 @@ class JenkinsApi:
 
 def deploy(app, env, build_config):
     pass
+
+
+from jenkinsapi.jenkins import Jenkins
+import logging
+
+
+class JenkinsClient:
+
+    def __init__(self, url, username=None, password=None):
+        """
+        初始化Jenkins客户端
+        :param url: Jenkins服务器URL
+        :param username: Jenkins登录用户名（可选）
+        :param password: Jenkins登录密码或API token（可选）
+        """
+        self.logger = logging.getLogger(__name__)
+        self.jenkins_server = Jenkins(url, username=username, password=password)
+        self.logger.info(f"Connected to Jenkins at {url}")
+
+    def get_all_jobs(self):
+        """
+        获取所有作业的名称列表
+        :return: 作业名称列表
+        """
+        jobs = self.jenkins_server.get_jobs_list()
+        return jobs
+
+    def get_job_config(self, name):
+        """
+        获取指定作业的XML配置
+        :param name: 作业名称
+        :return: 作业XML配置
+        """
+        job = self.jenkins_server.get_job(name)
+        config_xml = job.get_config()
+        return config_xml
+
+    def create_job(self, name, config_xml):
+        """
+        根据提供的XML配置创建新的Jenkins作业
+        :param name: 新作业的名称
+        :param config_xml: Jenkins作业的XML配置
+        :return: 创建作业是否成功
+        """
+        try:
+            self.jenkins_server.create_job(name, config_xml)
+            self.logger.info(f"Job '{name}' created successfully.")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to create job '{name}': {e}")
+            return False
+
+    def create_pipeline_job(self, name, pipeline_script):
+        """
+        创建Pipeline类型的Jenkins作业
+        :param name: 新作业的名称
+        :param pipeline_script: Jenkins Pipeline脚本内容 (Groovy语法)
+        :return: 创建作业是否成功
+        """
+        pipeline_xml = f"""
+           <flow-definition plugin="workflow-job@2.40">
+             <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.93">
+               <script>{pipeline_script}</script>
+               <sandbox>true</sandbox>
+             </definition>
+             <triggers/>
+             <disabled>false</disabled>
+           </flow-definition>
+           """
+        return self._create_job_with_xml(name, pipeline_xml)
+
+    def _create_job_with_xml(self, name, config_xml):
+        """
+        辅助方法：根据提供的XML配置创建作业
+        :param name: 新作业的名称
+        :param config_xml: Jenkins作业的XML配置
+        :return: 创建作业是否成功
+        """
+        try:
+            self.jenkins_server.create_job(name, config_xml)
+            self.logger.info(f"Job '{name}' created successfully.")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to create job '{name}': {e}")
+            return False
+
+    def trigger_build(self, job_name, params=None):
+        """
+        触发指定作业的构建
+        :param job_name: 作业名称
+        :param params: 构建参数字典（可选）
+        :return: 触发构建是否成功，以及构建编号
+        """
+        job = self.jenkins_server[job_name]
+        build_number = job.invoke(build_params=params)
+        self.logger.info(f"Build triggered for '{job_name}', Build #{build_number}.")
+        return True, build_number
+
+    def get_build_status(self, job_name, build_number):
+        """
+        获取指定作业某次构建的状态
+        :param job_name: 作业名称
+        :param build_number: 构建编号
+        :return: 构建状态（如'SUCCESS', 'FAILURE'等）
+        """
+        build = self.jenkins_server[job_name].get_build(build_number)
+        status = build.get_status()
+        self.logger.info(f"Build #{build_number} of '{job_name}' has status: {status}.")
+        return status
+
+
+# 使用示例
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    # 初始化Jenkins客户端
+    jenkins_url = "http://127.0.0.1:8080"
+    jenkins_username = "admin"
+    jenkins_password = "1234"
+    client = JenkinsClient(jenkins_url, username=jenkins_username, password=jenkins_password)
+
+    # 获取所有作业名称
+    print(client.get_all_jobs())
+    print(client.get_job_config("http:/localhost:8080/项目-1"))
+
+    # 创建新作业（这里需要提供一个有效的XML配置字符串）
+    config_xml = """
+        <?xml version='1.0' encoding='UTF-8'?>
+        <flow-definition plugin="workflow-job@2.40">
+          <actions/>
+          <description></description>
+          <keepDependencies>false</keepDependencies>
+          <properties/>
+          <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.76">
+            <script>
+              pipeline {
+                agent any
+                stages {
+                  stage('Example Stage') {
+                    steps {
+                      echo 'Hello from the Pipeline!'
+                    }
+                  }
+                }
+              }
+            </script>
+            <sandbox>true</sandbox>
+          </definition>
+          <triggers/>
+          <disabled>false</disabled>
+        </flow-definition>
+    """
+    success = client.create_job("new-job", config_xml)
+    print("Job creation successful:", success)
+
+    # 触发构建并获取状态（假设作业已存在）
+    # success, build_num = client.trigger_build("existing-job", {"param1": "value1"})
+    # print("Build triggered:", success, "Build Number:", build_num)
+
+    # 查询构建状态
+    # status = client.get_build_status("existing-job", build_num)
+    # print("Build Status:", status)
