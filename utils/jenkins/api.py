@@ -104,16 +104,27 @@ class JenkinsClient:
         :param password: Jenkins登录密码或API token（可选）
         """
         self.logger = logging.getLogger(__name__)
-        self.jenkins_server = Jenkins(url, username=username, password=password)
-        self.logger.info(f"Connected to Jenkins at {url}")
+        self.client = Jenkins(url, username=username, password=password)
 
     def get_all_jobs(self):
         """
         获取所有作业的名称列表
         :return: 作业名称列表
         """
-        jobs = self.jenkins_server.get_jobs_list()
+        jobs = self.client.get_jobs_list()
         return jobs
+
+    def get_job_info(self, name):
+        """
+        获取指定作业的信息
+        :param name: 作业名称
+        :return: 作业信息字典
+        """
+        job = self.client.get_job(name)
+        info = job.get_info()
+        return info
+
+
 
     def get_job_config(self, name):
         """
@@ -121,23 +132,21 @@ class JenkinsClient:
         :param name: 作业名称
         :return: 作业XML配置
         """
-        job = self.jenkins_server.get_job(name)
-        config_xml = job.get_config()
-        return config_xml
+        job = self.client.get_job(name)
+        xml = job.get_config()
+        return xml
 
-    def create_job(self, name, config_xml):
+    def create_job(self, name, xml):
         """
         根据提供的XML配置创建新的Jenkins作业
         :param name: 新作业的名称
-        :param config_xml: Jenkins作业的XML配置
+        :param xml: Jenkins作业的XML配置
         :return: 创建作业是否成功
         """
         try:
-            self.jenkins_server.create_job(name, config_xml)
-            self.logger.info(f"Job '{name}' created successfully.")
+            self.client.create_job(name, xml)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to create job '{name}': {e}")
             return False
 
     def create_pipeline_job(self, name, pipeline_script):
@@ -167,7 +176,7 @@ class JenkinsClient:
         :return: 创建作业是否成功
         """
         try:
-            self.jenkins_server.create_job(name, config_xml)
+            self.client.create_job(name, config_xml)
             self.logger.info(f"Job '{name}' created successfully.")
             return True
         except Exception as e:
@@ -181,7 +190,7 @@ class JenkinsClient:
         :param params: 构建参数字典（可选）
         :return: 触发构建是否成功，以及构建编号
         """
-        job = self.jenkins_server[job_name]
+        job = self.client[job_name]
         build_number = job.invoke(build_params=params)
         self.logger.info(f"Build triggered for '{job_name}', Build #{build_number}.")
         return True, build_number
@@ -193,7 +202,7 @@ class JenkinsClient:
         :param build_number: 构建编号
         :return: 构建状态（如'SUCCESS', 'FAILURE'等）
         """
-        build = self.jenkins_server[job_name].get_build(build_number)
+        build = self.client[job_name].get_build(build_number)
         status = build.get_status()
         self.logger.info(f"Build #{build_number} of '{job_name}' has status: {status}.")
         return status
@@ -214,34 +223,11 @@ if __name__ == "__main__":
     print(client.get_job_config("http:/localhost:8080/项目-1"))
 
     # 创建新作业（这里需要提供一个有效的XML配置字符串）
-    config_xml = """
-        <?xml version='1.0' encoding='UTF-8'?>
-        <flow-definition plugin="workflow-job@2.40">
-          <actions/>
-          <description></description>
-          <keepDependencies>false</keepDependencies>
-          <properties/>
-          <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.76">
-            <script>
-              pipeline {
-                agent any
-                stages {
-                  stage('Example Stage') {
-                    steps {
-                      echo 'Hello from the Pipeline!'
-                    }
-                  }
-                }
-              }
-            </script>
-            <sandbox>true</sandbox>
-          </definition>
-          <triggers/>
-          <disabled>false</disabled>
-        </flow-definition>
-    """
-    success = client.create_job("new-job", config_xml)
-    print("Job creation successful:", success)
+    with open("./config.xml", 'r') as f:
+        config_xml = ET.XML(f.read())
+    xml_bytes = ET.tostring(config_xml, encoding='utf-8')
+    success = client.create_job("new-job2", xml_bytes)
+    # print("Job creation successful:", success)
 
     # 触发构建并获取状态（假设作业已存在）
     # success, build_num = client.trigger_build("existing-job", {"param1": "value1"})
