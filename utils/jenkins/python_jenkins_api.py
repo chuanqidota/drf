@@ -51,8 +51,15 @@ class JenkinsManager:
     def delete_view(self, view_name):
         self.jenkins.delete_view(view_name)
 
+    def get_view_jobs(self, view_name):
+        """获取Jenkins视图中的作业列表"""
+        return self.jenkins.get_jobs(view_name=view_name)
+
     def create_job(self, job_name, xml=jenkins.EMPTY_CONFIG_XML):
         self.jenkins.create_job(job_name, xml)
+
+    def get_all_jobs(self):
+        return self.jenkins.get_all_jobs()
 
     def get_job_info(self, job_name):
         """
@@ -86,8 +93,8 @@ class JenkinsManager:
     def reconfig_job(self, job_name, xml=jenkins.RECONFIG_XML):
         self.jenkins.reconfig_job(job_name, xml)
 
-    def build_job(self, job_name, parameters):
-        return self.jenkins.build_job(job_name, parameters)
+    def job_exists(self, job_name):
+        return self.jenkins.job_exists(job_name)
 
     def disable_job(self, job_name):
         return self.jenkins.disable_job(job_name)
@@ -98,19 +105,29 @@ class JenkinsManager:
     def delete_job(self, job_name):
         return self.jenkins.delete_job(job_name)
 
-    def get_view_jobs(self, view_name):
-        """获取Jenkins视图中的作业列表"""
-        return self.jenkins.get_jobs(view_name=view_name)
+    def build_job(self, job_name, parameters):
+        return self.jenkins.build_job(job_name, parameters)
 
-    def get_all_jobs(self):
-        return self.jenkins.get_all_jobs()
+    def stop_build(self, job_name, number):
+        return self.jenkins.stop_build(job_name, number)
 
-    def get_build_info(self, job_name, build_number):
-        return self.jenkins.get_build_info(job_name, build_number)
+    def delete_build(self, job_name, number):
+        return self.jenkins.delete_build(job_name, number)
+
+    def get_running_builds(self):
+        return self.jenkins.get_running_builds()
 
     def get_last_build_info(self, job_name):
         job_info = self.get_job_info(job_name)
         return self.get_build_info(job_name, job_info['lastBuild']['number'])
+
+    def set_next_build_number(self, job_name, number):
+        return self.jenkins.set_next_build_number(job_name, number)
+
+    def get_build_info(self, job_name, build_number):
+        return self.jenkins.get_build_info(job_name, build_number)
+
+
 
 
 if __name__ == "__main__":
