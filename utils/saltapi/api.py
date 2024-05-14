@@ -17,6 +17,8 @@ salt-key -R 拒绝所有
 salt-key -d 删除指定 minion  
 salt-key -D 删除所有
 
+异步执行 跟上 --async
+
 salt 'hostname' sys.list_functions cmd # 列出cmd的功能
 salt "hostname" sys.doc cmd # 查询模块
 salt "hostname" sys.doc cmd.run # 查询模块数名
