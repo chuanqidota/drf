@@ -1,6 +1,8 @@
 """
     python-jenkins==1.8.2
 """
+from xml.etree import ElementTree
+
 import jenkins
 
 
@@ -105,7 +107,7 @@ class JenkinsManager:
     def delete_job(self, job_name):
         return self.jenkins.delete_job(job_name)
 
-    def build_job(self, job_name, parameters):
+    def build_job(self, job_name, parameters=None):
         return self.jenkins.build_job(job_name, parameters)
 
     def stop_build(self, job_name, number):
@@ -127,7 +129,34 @@ class JenkinsManager:
     def get_build_info(self, job_name, build_number):
         return self.jenkins.get_build_info(job_name, build_number)
 
+    def check_jenkinsfile_syntax(self, jenkinsfile):
+        return self.jenkins.check_jenkinsfile_syntax(jenkinsfile)
 
+    @staticmethod
+    def _parse_xml_root_str(config_xml):
+        xml_root = ElementTree.fromstring(config_xml)
+        return xml_root
+
+    @staticmethod
+    def _parse_xml_root_file(config_xml):
+        with open(config_xml, 'r') as f:
+            xml_root = ElementTree.XML(f.read())
+        return xml_root
+
+    def replace_xml(self, job_name, xml_root, **kwargs):
+        """
+
+        :param job_name:
+        :param xml_root:
+        :param kwargs:
+        :return:
+        """
+        # 更改方法
+        # root.find("").text = kwargs.get("")
+        updated_config_xml = ElementTree.tostring(xml_root, encoding="utf-8").decode("utf-8")
+        self.jenkins.reconfig_job(job_name, updated_config_xml)
+
+    
 
 
 if __name__ == "__main__":
