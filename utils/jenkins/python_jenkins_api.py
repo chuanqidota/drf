@@ -1,6 +1,58 @@
 """
     python-jenkins==1.8.2
 """
+"""
+<project> - 作业的根元素。
+<name> - 作业的名称。
+<description> - 作业的描述。
+<url> - 作业的 URL。
+<actions> - 包含作业的元数据，如参数、构建触发器等。
+<builders> - 存储构建步骤，例如执行 Shell 命令、Maven 目标、Gradle 任务等。
+<publishers> - 包含构建后的行为，如邮件通知、归档工件等。
+<buildWrappers> - 作业构建时的环境配置，如环境变量、SSH 凭证等。
+<scm> - 源代码管理配置，如 Git、Subversion 等。
+<triggers> - 构建触发器，如定时构建、代码仓库 webhook 等。
+<properties> - 作业的属性，可能包括参数化构建、矩阵配置等。
+<parameters> - 参数化构建的参数定义。
+<parameterDefinitions> - 参数列表，每个参数是一个 <hudson.model.StringParameterDefinition> 或其他类型。
+<definition> - 表示构建流程，对于 Pipeline 作业，通常包含一个 <jenkins.plugins.pipeline.PipelineScript> 元素，其中包含 Pipeline 脚本的文本
+
+<project>
+  <actions/>
+  <description>Example Pipeline Job</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>MESSAGE</name>
+          <description>Message to display</description>
+          <defaultValue>Hello, World!</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition>
+    <jenkins.plugins.pipeline.PipelineScript>
+      <script>
+        pipeline {
+          agent any
+          stages {
+            stage('Example') {
+              steps {
+                echo "${params.MESSAGE}"
+              }
+            }
+          }
+        }
+      </script>
+      <isInheriting>true</isInheriting>
+    </jenkins.plugins.pipeline.PipelineScript>
+  </definition>
+  ...
+</project>
+
+"""
 from xml.etree import ElementTree
 
 import jenkins
