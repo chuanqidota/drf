@@ -64,6 +64,19 @@ class JenkinsManager:
         """
         self.jenkins.delete_view(view_name)
 
+    def relate_view_job(self, view_name, job_name):
+        view_config_xml = self.jenkins.get_view_config(view_name)
+        xml_root = self._parse_xml_root_str(view_config_xml)
+        job_names = xml_root.find('jobNames')
+        if job_names is None:
+            job_names = ElementTree.SubElement(xml_root, 'jobNames')
+            comparator = ElementTree.SubElement(job_names, 'comparator')
+            comparator.attrib['class'] = 'hudson.util.CaseInsensitiveComparator'
+        new_job = ElementTree.SubElement(job_names, 'string')
+        new_job.text = job_name
+        print(xml_root)
+        self.jenkins.reconfig_view(view_name, self.make_xml(xml_root))
+
     def get_view_jobs(self, view_name):
         """
             获取视图中的作业列表
@@ -250,6 +263,10 @@ class JenkinsManager:
         return xml_root
 
     @staticmethod
+    def make_xml(root_xml):
+        return ElementTree.tostring(root_xml, method='xml')
+
+    @staticmethod
     def replace_xml(xml_root, **kwargs):
         """
             替换xml文件中的元素信息
@@ -258,12 +275,9 @@ class JenkinsManager:
         :return:
         """
         # 更改方法
-        # root.find("").text = kwargs.get("")
+        # xml_root.find("").text = kwargs.get("")
         updated_config_xml = ElementTree.tostring(xml_root, encoding="utf-8").decode("utf-8")
         return updated_config_xml
-
-
-
 
 
 if __name__ == "__main__":
@@ -274,12 +288,15 @@ if __name__ == "__main__":
 
     manager = JenkinsManager(jenkins_url, jenkins_username, jenkins_password)
     # print(manager.create_view("view-1"))
-    # print(manager.get_view_config("view-1"))
+    print(manager.get_view_config("view-1"))
     # print(manager.get_views())
     # print(manager.delete_view("view-1"))
+    print(manager.relate_view_job("view-1", "aaa"))
+
+    # print(manager.get_view_jobs("view-1"))
 
     # print(manager.create_job("job-name2"))
 
     # print(manager.get_job_info("job-name2"))
-    # print(manager.get_job_config("job-name2"))
-    print(manager.reconfig_job("job-name2"))
+    # print(manager.get_job_config("aaaaa"))
+    # print(manager.reconfig_job("job-name2"))
