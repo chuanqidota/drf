@@ -1,8 +1,7 @@
 import json
 
 import requests
-
-from salt.utils.event import SaltEvent, MasterEvent
+from salt.utils.event import MasterEvent
 
 """
 官方文档
@@ -27,6 +26,18 @@ salt 'hostname' sys.state_doc cmd # 查询state.sls文件写法
 salt -L 'hostname,hostname2' cmd.run 'df -h' # 执行多台
 
 salt-run jobs.lookup_jid 20240508035728435872 # 查询jid的结果
+
+
+配置git
+/etc/salt/master
+fileserver_backend:
+  - git
+
+gitfs_remotes:
+  - https://github.com/yourusername/your-repo.git
+
+# 刷新文件
+salt-run fileserver.update
 """
 
 
@@ -166,16 +177,15 @@ class SaltAPI:
         jid = res['return'][0]['jid']
         return jid
 
-    def api_get_events(self, jid, minions):
+    def api_get_events(self, jid):
         """
-            接口方式监听事件
+            接口方式监听事件-执行之前最好探测下-不通的给剔除掉-剩余的在去执行具体的任务
             执行异步任务传入jid和minions 事件进行回调去处理结果
         :param jid:
-        :param minions: 列表
         :return:
         """
-        completed_minions = set()
         minions = []
+        completed_minions = set()
         while True:
             response = requests.get(url=self.events_url, headers=self.headers, stream=True)
             for line in response.iter_lines():
@@ -187,40 +197,45 @@ class SaltAPI:
                         minions = event_data['data']['minions']
                     if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/ret/'):
                         minion_id = event_data['data']['id']
+                        completed_minions.add(minion_id)
                         success = event_data['data'].get('success', False)
-                        stdout = dict(list(event_data['data']['return'].values())[0]).get("changes", {}).get("stdout")
-                        stderr = dict(list(event_data['data']['return'].values())[0]).get("changes", {}).get("stderr")
                         if success:
+                            stdout = dict(list(event_data['data']['return'].values())[0]).get("changes").get("stdout")
+                            stderr = dict(list(event_data['data']['return'].values())[0]).get("changes").get("stderr")
                             self.event_backup(jid, minion_id, success, stdout, stderr)
-                            completed_minions.add(minion_id)
+                        else:
+                            stdout = ""
+                            stderr = dict(list(event_data['data']['return'].values())[0]).get("comment")
+                            self.event_backup(jid, minion_id, success, stdout, stderr)
                         if len(completed_minions) == len(minions):
                             break
             break
 
-    def master_get_events(self, jid, minions):
+    def master_get_events(self, jid):
         """
             master节点事件监听
             执行异步任务传入jid和minions 事件进行回调去处理结果
         :param jid:
-        :param minions: 列表
         :return:
         """
-        completed_minions = set()
         minions = []
+        completed_minions = set()
         while True:
             event = MasterEvent("/var/run/salt/master")
             event_data = event.iter_events(full=True)
             for item in event_data:
-                if item and item.get('tag').startswith(f'salt/job/{jid}/new/'):
-                    minions = item['data']['minions']
                 if item and item.get('tag').startswith(f'salt/job/{jid}/ret/'):
                     minion_id = item['data']['id']
                     success = item['data'].get('success', False)
-                    stdout = dict(list(item['data']['return'].values())[0]).get("changes", {}).get("stdout")
-                    stderr = dict(list(item['data']['return'].values())[0]).get("changes", {}).get("stderr")
+                    completed_minions.add(minion_id)
                     if success:
+                        stdout = dict(list(item['data']['return'].values())[0]).get("changes").get("stdout")
+                        stderr = dict(list(item['data']['return'].values())[0]).get("changes").get("stderr")
                         self.event_backup(jid, minion_id, success, stdout, stderr)
-                        completed_minions.add(minion_id)
+                    else:
+                        stdout = ""
+                        stderr = dict(list(event_data['data']['return'].values())[0]).get("comment")
+                        self.event_backup(jid, minion_id, success, stdout, stderr)
                     if len(completed_minions) == len(minions):
                         break
             break
@@ -566,6 +581,20 @@ class SaltAPI:
         ret = res['return'][0]
         return ret
 
+    def get_job_res3(self, jid):
+        """
+            通过jid获取执行结果
+            只能获取minion存活的
+            minion不存活/不存在都获取不到
+        :param jid: jobid
+        :return:
+            {'jid': '20240516072151470283', 'Function': 'state.sls', 'Arguments': ['cmd.cmd_run'], 'Target': ['localhost', 'localhost12'], 'Target-type': 'list', 'User': 'saltapi', 'Minions': ['localhost'], 'StartTime': '2024, May 16 07:21:51.470283', 'Result': {'localhost': {'return': {'cmd_|-run_command_|-sleep 20 && echo "Hello, World!"_|-run': {'name': 'sleep 20 && echo "Hello, World!"', 'changes': {'pid': 2217, 'retcode': 0, 'stdout': 'Hello, World!', 'stderr': ''}, 'result': True, 'comment': 'Command "sleep 20 && echo "Hello, World!"" run', '__sls__': 'cmd.cmd_run', '__run_num__': 0, 'start_time': '15:21:52.128210', 'duration': 20030.115, '__id__': 'run_command'}}, 'retcode': 0, 'success': True, 'out': 'highstate'}}}
+        """
+        body = {'client': 'runner', 'fun': 'jobs.list_job', 'jid': jid}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]
+        return ret
+
     def get_running_jobs(self):
         """
             获取运行中的任务
@@ -581,13 +610,23 @@ class SaltAPI:
         """
             检查某个job是否已执行并成功退出
         :param jid:
+            只能salt-key接受的minion-但是及时不存活的minion也可以获取结果
         :return True成功退出，False没有成功退出
         """
         body = {'client': 'runner', 'fun': 'jobs.exit_success', 'jid': jid}
         res = self.__post(self.base_url, body)
-        print("res:", res)
         ret = res['return'][0]
-        return False if ret else True
+        return ret
+
+    def update_git_file(self):
+        """
+            当git更新的时候-通过webhook让其执行接口，执行更新更新文件
+        :return: 
+        """
+        body = {'client': 'runner', 'fun': 'fileserver.update'}
+        res = self.__post(self.base_url, body)
+        ret = res['return'][0]
+        return ret
 
 
 # 使用示例
@@ -597,7 +636,7 @@ if __name__ == "__main__":
         run_command:
           cmd.run:
             - name: sleep 5 && echo "Hello, World!"
-        
+
         /srv/salt/cmd/pillar_demo.sls
         {% set my_param = salt['pillar.get']('version', 'default_value') %}
         pillar_test:
@@ -623,4 +662,4 @@ if __name__ == "__main__":
     # print(s.check_job_result(_jid))
     # print(s.get_running_jobs())
 
-    print(s.exec_pillar("localhost", "cmd.pillar_demo", **{"version": "aaaa"}))
+    # print(s.exec_pillar("localhost", "cmd.pillar_demo", **{"version": "aaaa"}))
