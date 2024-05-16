@@ -21,15 +21,16 @@ class WorkerThread(threading.Thread):
 
 if __name__ == '__main__':
     # 创建工作线程，传递任意数量的位置参数和关键字参数
-    worker1 = WorkerThread('param1', 'param2', arg1='value1', arg2='value2')
-    worker2 = WorkerThread('another_param1', arg1='value3')
+    args = (1, 2, 3)
+    kwargs = {"key1": "value1", "key2": "value2"}
+    t1 = WorkerThread(args, kwargs)
+    t2 = WorkerThread(args, kwargs)
 
     # 启动线程
-    worker1.start()
-    worker2.start()
+    t1.start()
+    t2.start()
 
     # 等待所有线程结束
-    worker1.join()
-    worker2.join()
+    t1.join()
+    t2.join()
 
-    print('All threads finished.')

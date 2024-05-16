@@ -7,13 +7,13 @@ def worker_function(*args, **kwargs):
     # 在这里执行你的任务
 
 
-def worker_lock():
+def worker_lock(*args, **kwargs):
     """
         带锁
     :return:
     """
     with threading.Lock():
-        print("lock")
+        worker_function(*args, **kwargs)
 
 
 if __name__ == '__main__':

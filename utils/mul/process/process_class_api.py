@@ -19,16 +19,15 @@ class WorkerProcessing(multiprocessing.Process):
 
 if __name__ == "__main__":
     # 创建参数
-    position_args = (1, 2, 3)
-    keyword_args = {"key1": "value1", "key2": "value2"}
+    args = (1, 2, 3)
+    kwargs = {"key1": "value1", "key2": "value2"}
 
-    # 创建并启动进程
-    processes = [WorkerProcessing(*position_args, **keyword_args) for _ in range(3)]
-    for process in processes:
-        process.start()
+    p1 = WorkerProcessing(*args, **kwargs)
+    p2 = WorkerProcessing(*args, **kwargs)
+    p1.start()
+    p2.start()
 
-    # 等待所有进程结束
-    for process in processes:
-        process.join()
+    p1.join()
+    p2.join()
 
     print("All workers have finished.")

@@ -8,7 +8,7 @@ def worker_function(*args, **kwargs):
 
 if __name__ == '__main__':
     args = (1, 2, 3)
-    kwargs = {'kwargs1': "kwargs_value1", "kwargs2": "kwargs_value2"}
+    kwargs = {"key1": "value1", "key2": "value2"}
     p1 = multiprocessing.Process(target=worker_function, args=args, kwargs=kwargs)
     p2 = multiprocessing.Process(target=worker_function, args=args, kwargs=kwargs)
     p1.start()
