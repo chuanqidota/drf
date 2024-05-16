@@ -15,6 +15,8 @@ salt-key -r 拒绝一台
 salt-key -R 拒绝所有  
 salt-key -d 删除指定 minion  
 salt-key -D 删除所有
+salt-run manage.up 查看存活的key
+salt-run manage.down 查看不存活的key
 
 异步执行 跟上 --async
 
@@ -22,6 +24,8 @@ salt 'hostname' sys.list_functions cmd # 列出cmd的功能
 salt "hostname" sys.doc cmd # 查询模块
 salt "hostname" sys.doc cmd.run # 查询模块数名
 salt 'hostname' sys.state_doc cmd # 查询state.sls文件写法
+
+salt-run sys.doc jobs # 查看jobd的帮助文档
 
 salt -L 'hostname,hostname2' cmd.run 'df -h' # 执行多台
 
@@ -314,6 +318,24 @@ class SaltAPI:
             }
         """
         body = {'client': 'wheel', 'fun': 'key.list_all'}
+        res = self.__post(self.base_url, body)
+        res = res['return'][0]['data']['return']
+        return res
+    
+    def get_active_keys(self):
+        """
+            查看存活的minion
+        """
+        body = {'client': 'runner', 'fun': 'manage.up'}
+        res = self.__post(self.base_url, body)
+        res = res['return'][0]['data']['return']
+        return res
+
+    def get_deactive_keys(self):
+        """
+            查看不存活的minion
+        """
+        body = {'client': 'runner', 'fun': 'manage.down'}
         res = self.__post(self.base_url, body)
         res = res['return'][0]['data']['return']
         return res
