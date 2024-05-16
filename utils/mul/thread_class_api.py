@@ -12,8 +12,11 @@ class WorkerThread(threading.Thread):
 
     def run(self):
         # 这里的run方法是线程启动后执行的
-        print(f'Worker thread with args {self.args} and kwargs {self.kwargs} is running.')
+        self.work_function(*self.args, **self.kwargs)
+
+    def work_function(self, *args, **kwargs):
         # 在这里执行你的任务，可以使用self.args和self.kwargs
+        print(f"Working with: {args}, {kwargs}")
 
 
 if __name__ == '__main__':
