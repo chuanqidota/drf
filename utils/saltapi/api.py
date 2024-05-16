@@ -175,6 +175,7 @@ class SaltAPI:
         :return:
         """
         completed_minions = set()
+        minions = []
         while True:
             response = requests.get(url=self.events_url, headers=self.headers, stream=True)
             for line in response.iter_lines():
@@ -182,6 +183,8 @@ class SaltAPI:
                 if line:
                     event = line.decode('utf-8')
                     event_data = json.loads(event[5:]) if event.startswith('data:') else None
+                    if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/new/'):
+                        minions = event_data['data']['minions']
                     if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/ret/'):
                         minion_id = event_data['data']['id']
                         success = event_data['data'].get('success', False)
@@ -203,10 +206,13 @@ class SaltAPI:
         :return:
         """
         completed_minions = set()
+        minions = []
         while True:
             event = MasterEvent("/var/run/salt/master")
             event_data = event.iter_events(full=True)
             for item in event_data:
+                if item and item.get('tag').startswith(f'salt/job/{jid}/new/'):
+                    minions = item['data']['minions']
                 if item and item.get('tag').startswith(f'salt/job/{jid}/ret/'):
                     minion_id = item['data']['id']
                     success = item['data'].get('success', False)
