@@ -44,3 +44,6 @@ services:
 volumes:
   mysql_data:
   es_data:
+
+# docker-compose up -d
+# docker-compose down
