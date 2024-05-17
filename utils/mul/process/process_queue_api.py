@@ -1,5 +1,10 @@
 import multiprocessing
 
+
+def worker_function(*args, **kwargs):
+    print(f'Worker function with args {args} and kwargs {kwargs} is running.')
+
+
 class MultiProcessQueue:
     """
         多进程队列
