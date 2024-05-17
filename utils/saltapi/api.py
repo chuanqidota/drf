@@ -328,19 +328,21 @@ class SaltAPI:
     def get_active_keys(self):
         """
             查看存活的minion
+        :return: 列表 minion
         """
         body = {'client': 'runner', 'fun': 'manage.up'}
         res = self.__post(self.base_url, body)
-        res = res['return'][0]['data']['return']
+        res = res['return'][0]
         return res
 
     def get_deactive_keys(self):
         """
             查看不存活的minion
+        :return: 列表 minion
         """
         body = {'client': 'runner', 'fun': 'manage.down'}
         res = self.__post(self.base_url, body)
-        res = res['return'][0]['data']['return']
+        res = res['return'][0]
         return res
 
     def accept_key(self, minion_id):
@@ -678,6 +680,8 @@ if __name__ == "__main__":
     s = SaltAPI(_base_url, _username, _password)
     _minion_id = ["localhost", "localhost1"]
     # print(s.get_keys2())
+    # print(s.get_active_keys())
+    # print(s.get_deactive_keys())
     # # print(s.delete_key(_minion_id))
     # print(s.accept_key(_minion_id))
     # print(s.reject_key(_minion_id))
