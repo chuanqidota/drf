@@ -1,6 +1,5 @@
-import concurrent.futures
 import time
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor, wait, as_completed
 
 
 def worker_function(name):
@@ -21,7 +20,7 @@ if __name__ == '__main__':
         # 等待结束
         wait(futures)
         # 收集结果（如果任务有返回值的话），并打印完成状态
-        for future in concurrent.futures.as_completed(futures):
+        for future in as_completed(futures):
             try:
                 data = future.result()  # 获取任务的结果，如果有的话
                 result.append(data)
