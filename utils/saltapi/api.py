@@ -1,7 +1,8 @@
 import json
 
 import requests
-from salt.utils.event import MasterEvent
+
+# from salt.utils.event import MasterEvent
 
 """
 官方文档
@@ -52,6 +53,7 @@ class SaltAPI:
         self.password = password
         self.login_url = f"{self.base_url}/login"  # 用于获取认证令牌
         self.token = self.get_token()  # token
+        print(self.token)
         self.headers = {"X-Auth-Token": self.token, "Content-Type": "application/json"}
         self.keys_url = f"{self.base_url}/keys"  # 获取key
         self.events_url = f"{self.base_url}/events"  # 订阅Salt事件总线，监听Salt系统的各种事件 连接监听
@@ -183,8 +185,8 @@ class SaltAPI:
 
     def api_get_events(self, jid):
         """
-            接口方式监听事件-执行之前最好探测下-不通的给剔除掉-剩余的在去执行具体的任务
-            执行异步任务传入jid和minions 事件进行回调去处理结果
+            接口方式监听事件
+            需要通过sls文件方式执行
         :param jid:
         :return:
         """
@@ -199,26 +201,22 @@ class SaltAPI:
                     event_data = json.loads(event[5:]) if event.startswith('data:') else None
                     if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/new/'):
                         minions = event_data['data']['minions']
-                    if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/ret/'):
+                    if event_data and \
+                            event_data.get('tag').startswith(f'salt/job/{jid}/ret/') and \
+                            event_data['data']['func'] == "state.sls":
                         minion_id = event_data['data']['id']
                         completed_minions.add(minion_id)
                         success = event_data['data'].get('success', False)
-                        if success:
-                            stdout = dict(list(event_data['data']['return'].values())[0]).get("changes").get("stdout")
-                            stderr = dict(list(event_data['data']['return'].values())[0]).get("changes").get("stderr")
-                            self.event_backup(jid, minion_id, success, stdout, stderr)
-                        else:
-                            stdout = ""
-                            stderr = dict(list(event_data['data']['return'].values())[0]).get("comment")
-                            self.event_backup(jid, minion_id, success, stdout, stderr)
+                        res = event_data['data']['return']
+                        self.event_backup(jid, minion_id, success, res)
                         if len(completed_minions) == len(minions):
                             break
+            self.event_end(jid)
             break
 
     def master_get_events(self, jid):
         """
             master节点事件监听
-            执行异步任务传入jid和minions 事件进行回调去处理结果
         :param jid:
         :return:
         """
@@ -228,34 +226,39 @@ class SaltAPI:
             event = MasterEvent("/var/run/salt/master")
             event_data = event.iter_events(full=True)
             for item in event_data:
-                if item and item.get('tag').startswith(f'salt/job/{jid}/ret/'):
+                if item and \
+                        item.get('tag').startswith(f'salt/job/{jid}/ret/') and \
+                        event_data['data']['func'] == "state.sls":
                     minion_id = item['data']['id']
                     success = item['data'].get('success', False)
                     completed_minions.add(minion_id)
-                    if success:
-                        stdout = dict(list(item['data']['return'].values())[0]).get("changes").get("stdout")
-                        stderr = dict(list(item['data']['return'].values())[0]).get("changes").get("stderr")
-                        self.event_backup(jid, minion_id, success, stdout, stderr)
-                    else:
-                        stdout = ""
-                        stderr = dict(list(event_data['data']['return'].values())[0]).get("comment")
-                        self.event_backup(jid, minion_id, success, stdout, stderr)
+                    res = item['data']['return']
+                    self.event_backup(jid, minion_id, success, res)
                     if len(completed_minions) == len(minions):
                         break
+            self.event_end(jid)
             break
 
     @staticmethod
-    def event_backup(jid, minion, success, stdout, stderr):
+    def event_backup(jid, minion, success, res):
         """
             事件回调 继承后重写这个函数
         :param jid:
         :param minion:
         :param success:
-        :param stdout:
-        :param stderr:
+        :param res:
         :return:
         """
-        print(jid, minion, success, stdout, stderr)
+        print(jid, minion, success, res)
+
+    @staticmethod
+    def event_end(jid):
+        """
+            时间结束回调
+        :param jid:
+        :return:
+        """
+        print(jid)
 
     def get_all_minions_info(self):
         """
@@ -321,7 +324,7 @@ class SaltAPI:
         res = self.__post(self.base_url, body)
         res = res['return'][0]['data']['return']
         return res
-    
+
     def get_active_keys(self):
         """
             查看存活的minion
@@ -594,6 +597,8 @@ class SaltAPI:
     def get_job_res2(self, jid):
         """
             通过jid获取执行结果
+            只能获取minion存活的
+            minion不存活/不存在都获取不到
         :param jid: jobid
         :return: 结果
             {'localhost': True}
@@ -632,7 +637,8 @@ class SaltAPI:
         """
             检查某个job是否已执行并成功退出
         :param jid:
-            只能salt-key接受的minion-但是及时不存活的minion也可以获取结果
+            获取接受的key-(包含key存活和不存活都可以)
+            不能获取不存在的
         :return True成功退出，False没有成功退出
         """
         body = {'client': 'runner', 'fun': 'jobs.exit_success', 'jid': jid}
@@ -643,7 +649,7 @@ class SaltAPI:
     def update_git_file(self):
         """
             当git更新的时候-通过webhook让其执行接口，执行更新更新文件
-        :return: 
+        :return:
         """
         body = {'client': 'runner', 'fun': 'fileserver.update'}
         res = self.__post(self.base_url, body)
@@ -681,7 +687,7 @@ if __name__ == "__main__":
     # _jid = s.async_state_sls(_minion_id, 'cmd.cmd_run', "list")
     # print(_jid)
     # s.api_get_events(_jid, [_minion_id])
-    # print(s.check_job_result(_jid))
+    # print(s.check_job_result(20240517021144534608))
     # print(s.get_running_jobs())
 
     # print(s.exec_pillar("localhost", "cmd.pillar_demo", **{"version": "aaaa"}))
