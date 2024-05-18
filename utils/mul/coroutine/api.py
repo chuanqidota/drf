@@ -50,7 +50,7 @@ def main2():
     task1 = loop.create_task(worker_function(1, "a"))
     task2 = loop.create_task(worker_function(2, "b"))
     task1.add_done_callback(lambda x: print(x.result()))  # 这里打印结果
-    task2.add_done_callback(lambda x: print(x.result()))
+    task2.add_done_callback(lambda x: print(x.result()))  # 事件回调
     loop.run_until_complete(asyncio.wait([task1, task2]))
     print(f"end-{time.strftime('%X')}")
 
