@@ -63,41 +63,46 @@ v1 = client.CoreV1Api()
 
 # Service 的 JSON 定义
 service_json = {
-  "apiVersion": "v1",
-  "kind": "Service",
-  "metadata": {
-    "name": "my-service"
-  },
-  "spec": {
-    "selector": {
-      "app": "my-app"
+    "apiVersion": "v1",
+    "kind": "Service",
+    "metadata": {
+        "name": "my-service"
     },
-    "ports": [
-      {
-        "protocol": "TCP",
-        "port": 80,
-        "targetPort": 9376
-      }
-    ]
-  }
+    "spec": {
+        "selector": {
+            "app": "my-app"
+        },
+        "ports": [
+            {
+                "protocol": "TCP",
+                "port": 80,
+                "targetPort": 9376
+            }
+        ]
+    }
 }
+
 
 # 创建 Service
 def create_service():
     return v1.create_namespaced_service(namespace="default", body=service_json)
 
+
 # 列出所有 Service
 def list_services():
     return v1.list_namespaced_service(namespace="default")
+
 
 # 删除 Service
 def delete_service(service_name):
     return v1.delete_namespaced_service(name=service_name, namespace="default")
 
+
 config.load_kube_config()
 
 # 创建 Kubernetes 客户端对象
 v1 = client.CoreV1Api()
+
 
 # 创建 Pod
 def create_pod():
@@ -123,9 +128,11 @@ def create_pod():
     }
     return v1.create_namespaced_pod(namespace="default", body=pod_manifest)
 
+
 # 读取 Pod
 def read_pod(pod_name):
     return v1.read_namespaced_pod(name=pod_name, namespace="default")
+
 
 # 更新 Pod
 def update_pod(pod_name):
@@ -133,9 +140,11 @@ def update_pod(pod_name):
     pod.spec.containers[0].image = "nginx:latest"
     return v1.replace_namespaced_pod(name=pod_name, namespace="default", body=pod)
 
+
 # 删除 Pod
 def delete_pod(pod_name):
     return v1.delete_namespaced_pod(name=pod_name, namespace="default")
+
 
 # 查询 Pod 状态
 def get_pod_status(pod_name):
@@ -145,11 +154,13 @@ def get_pod_status(pod_name):
 
 from kubernetes import client, config
 
+
 def get_deployment_info(deployment_name):
     config.load_kube_config()
     api_instance = client.AppsV1Api()
     response = api_instance.read_namespaced_deployment(name=deployment_name, namespace="default")
     print(f"Deployment '{deployment_name}' details: {response.to_dict()}")
+
 
 def create_deployment():
     config.load_kube_config()
@@ -178,6 +189,7 @@ def create_deployment():
     }
     apps_v1_api.create_namespaced_deployment(body=deployment_manifest, namespace="default")
 
+
 def scale_deployment(deployment_name, replicas):
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
@@ -191,18 +203,22 @@ def pause_deployment(deployment_name):
     patch_body = {"spec": {"paused": True}}
     apps_v1_api.patch_namespaced_deployment(name=deployment_name, namespace="default", body=patch_body)
 
+
 def resume_deployment(deployment_name):
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
     patch_body = {"spec": {"paused": False}}
     apps_v1_api.patch_namespaced_deployment(name=deployment_name, namespace="default", body=patch_body)
 
+
 def delete_deployment(deployment_name):
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
     apps_v1_api.delete_namespaced_deployment(name=deployment_name, namespace="default", body=client.V1DeleteOptions())
 
+
 from kubernetes import client, config
+
 
 def create_replicaset():
     config.load_kube_config()
@@ -226,6 +242,7 @@ def create_replicaset():
 
     apps_v1_api.create_namespaced_replica_set(namespace="default", body=replicaset_manifest)
 
+
 # create_replicaset()
 
 
@@ -235,6 +252,7 @@ def get_replicaset(name):
     replicaset = apps_v1_api.read_namespaced_replica_set(name, "default")
     print(f"ReplicaSet '{name}': {replicaset.to_dict()}")
 
+
 # get_replicaset("my-replicaset")
 def update_replicas(replicaset_name, replicas):
     config.load_kube_config()
@@ -242,14 +260,54 @@ def update_replicas(replicaset_name, replicas):
     body = {"spec": {"replicas": replicas}}
     apps_v1_api.patch_namespaced_replica_set(name=replicaset_name, namespace="default", body=body)
 
+
 # update_replicas("my-replicaset", 5)
 def delete_replicaset(replicaset_name):
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
     apps_v1_api.delete_namespaced_replica_set(name=replicaset_name, namespace="default", body=client.V1DeleteOptions())
 
+
 # delete_replicaset("my-replicaset")
 
+
+class KubernetesManager(object):
+
+    def __init__(self):
+        config.load_kube_config()
+        self.api = client.CoreV1Api()
+        self.apps_api = client.AppsV1Api()
+        self.batch_api = client.BatchV1Api()
+        self.rbac_api = client.RbacAuthorizationV1Api()
+
+    def list_namespaces(self):
+        namespaces = self.api.list_namespace()
+        return [namespace.metadata.name for namespace in namespaces.items]
+
+    def create_namespace(self, namespace_name):
+        namespace = client.V1Namespace(
+            metadata=client.V1ObjectMeta(name=namespace_name)
+        )
+        return self.api.create_namespace(namespace)
+
+    def delete_namespace(self, namespace_name):
+        return self.api.delete_namespace(namespace_name)
+
+    def list_nodes(self):
+        nodes = self.api.list_node()
+        return [node.metadata.name for node in nodes.items]
+
+    def get_pod_logs(self, pod_name, namespace="default", follow=False, tail_lines=10):
+        stream_method = self.api.read_namespaced_pod_log if not follow else self.api.read_namespaced_pod_log
+        log_output = stream_method(
+            name=pod_name,
+            namespace=namespace,
+            follow=follow,
+            tail_lines=tail_lines
+        )
+
+        for line in log_output:
+            print(line.decode('utf-8'))
 
 
 
