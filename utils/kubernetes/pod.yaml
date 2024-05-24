@@ -1,0 +1,25 @@
+apiVersion: v1 # # API版本，表示我们使用的Kubernetes API的版本
+kind: Pod # 资源类型，这里创建的是Pod
+metadata: # 元数据部分，包含Pod的名称、标签等信息
+  name: my-app-pod # Pod的唯一名称
+  labels: # 添加标签，方便通过label selector进行操作
+    app: my-app # 应用的名称标签
+spec: # 规范化部分，定义Pod的详细配置
+  containers: # 容器列表，Pod可以包含多个容器，这里仅有一个
+    -
+      name: my-container  # 容器的定义
+      image: nginx:latest  # 使用的Docker镜像及版本
+      imagePullPolicy: Always # 镜像拉取策略，Always尝试从仓库拉取最新镜像，IfNotPresent则只在本地没有该镜像时拉取
+      ports: # 容器对外暴露的端口
+        -
+          containerPort: 80 # 容器内部端口映射到宿主机的端口
+      resources: # 容器的资源请求和限制
+        requests: # 请求的最小CPU和内存资源
+          cpu: "100m"
+          memory: "128Mi"
+        limits: # 允许的最大CPU和内存资源
+          cpu: "500m"
+          memory: "512Mi"
+
+      restartPolicy: OnFailure # # 容器的重启策略，Never不重启，OnFailure仅在容器非正常退出时重启，Always总是重启
+  # 如果有多个容器，这里可以继续添加更多容器配置

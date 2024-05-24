@@ -1,0 +1,15 @@
+apiVersion: v1 # API版本，表示我们使用的Kubernetes API的版本
+kind: Service # 资源类型，这里创建的是Service
+metadata: # 元数据部分，包含Service的名称、标签等信息
+  name: my-app-service # Service的唯一名称
+  labels: # 添加标签，方便通过label selector进行操作
+    app: my-app # 应用的名称标签
+spec: # 规范化部分，定义Service的详细配置
+  selector: # 选择器，用于关联Service与对应的Pods
+    app: my-app # 这里的label必须与Pod的labels匹配
+  type: ClusterIP # Service的类型，可以是ClusterIP（默认，仅在集群内部可达）、NodePort（通过节点的端口暴露）、LoadBalancer（云服务商提供的负载均衡器）
+  ports: # 定义Service对外暴露的端口
+  -
+    port: 80 # 定义对外暴露的端口，可以自定义端口号
+    targetPort: 80 # Pod内的目标端口，这里的值应与Pod内容器的containerPort相同
+    nodePort: 30080 # 只有当type为NodePort时才生效,# 可选，如果Service类型是NodePort，可以指定节点上对外开放的端口
