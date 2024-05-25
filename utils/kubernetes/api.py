@@ -272,6 +272,38 @@ def delete_replicaset(replicaset_name):
 
 
 class KubernetesManager(object):
+    """
+        CoreV1Api: 对象用于操作 Kubernetes 中的基本资源，这些资源通常是集群的核心组成部分
+            Pods
+            Services
+            ConfigMaps
+            Secrets
+            PersistentVolumes
+            PersistentVolumeClaims
+            Nodes
+            Events
+            Namespaces
+            LimitRanges
+            ResourceQuotas
+            ServiceAccounts
+        AppsV1Api: 对象处理与应用程序部署和管理相关的资源，这些资源属于 Kubernetes 的应用层
+            Deployments
+            StatefulSets
+            DaemonSets
+            ReplicaSets
+            ControllerRevisions
+            DeploymentConfigs (OpenShift specific)
+        BatchV1Api: 对象主要用于周期性或一次性任务，如批处理作业和cron作业
+            Jobs
+            CronJobs
+        RbacAuthorizationV1Api: 对象处理 Kubernetes 的角色基件授权（RBAC）相关资源
+            ClusterRoles
+            Roles
+            ClusterRoleBindings
+            RoleBindings
+
+
+    """
 
     def __init__(self):
         config.load_kube_config()
@@ -309,6 +341,42 @@ class KubernetesManager(object):
         for line in log_output:
             print(line.decode('utf-8'))
 
+    def get_all_deployment_in_namespace(self, namespace):
+        deployments = self.apps_api.list_namespaced_deployment(namespace=namespace)
+        return deployments.items
+
+    def get_deployment_by_name(self, namespace, deployment_name):
+        deployment = self.apps_api.read_namespaced_deployment(name=deployment_name, namespace=namespace)
+        return deployment
+
+    def get_deployment_by_label(self, namespace, label_selector):
+        deployments = self.apps_api.list_namespaced_deployment(namespace=namespace, label_selector=label_selector)
+        return deployments.items
+
+    def create_deplpyment(self, namespace, deployment_name, replicas, image):
+        deployment_manifest = {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": deployment_name},
+            "spec": {
+                "replicas": replicas,
+                "selector": {"matchLabels": {"app": "my-app"}},
+                "template": {
+                    "metadata": {"labels": {"app": "my-app"}},
+                    "spec": {
+                        "containers": [
+                            {
+                                "name": "my-container",
+                                "image": image,
+                                "ports": [{"containerPort": 80}]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        deployment = self.apps_api.create_namespaced_deployment(namespace=namespace, body=deployment_manifest)
+        return deployment
 
 
 # 示例
