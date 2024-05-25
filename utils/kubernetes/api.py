@@ -307,27 +307,97 @@ class KubernetesManager(object):
 
     def __init__(self):
         config.load_kube_config()
+        # configuration = client.Configuration()
+        # configuration.host = "https://127.0.0.1:6443"
+        # configuration.api_key = {"authorization": "Bearer <YOUR_TOKEN>"}
+        # configuration.verify_ssl = False # 如果你的API服务器使用了自签名的证书，你可能需要禁用证书验证
+        # client.Configuration.set_default(configuration) # 初始化API客户端
+
         self.api = client.CoreV1Api()
         self.apps_api = client.AppsV1Api()
         self.batch_api = client.BatchV1Api()
         self.rbac_api = client.RbacAuthorizationV1Api()
 
     def list_namespaces(self):
+        """
+            查询namespace
+        :return:
+            ['default', 'kube-node-lease', 'kube-public', 'kube-system']
+        """
         namespaces = self.api.list_namespace()
         return [namespace.metadata.name for namespace in namespaces.items]
 
     def create_namespace(self, namespace_name):
-        namespace = client.V1Namespace(
-            metadata=client.V1ObjectMeta(name=namespace_name)
-        )
-        return self.api.create_namespace(namespace)
+        """
+            创建命名空间
+        :param namespace_name:
+        :return:
+            {'api_version': 'v1',
+             'kind': 'Namespace',
+             'metadata': {'annotations': None,
+                          'creation_timestamp': datetime.datetime(2024, 5, 25, 6, 31, 6, tzinfo=tzutc()),
+                          'deletion_grace_period_seconds': None,
+                          'deletion_timestamp': None,
+                          'finalizers': None,
+                          'generate_name': None,
+                          'generation': None,
+                          'labels': {'kubernetes.io/metadata.name': 'test'},
+                          'managed_fields': [{'api_version': 'v1',
+                                              'fields_type': 'FieldsV1',
+                                              'fields_v1': {'f:metadata': {'f:labels': {'.': {},
+                                                                                        'f:kubernetes.io/metadata.name': {}}}},
+                                              'manager': 'OpenAPI-Generator',
+                                              'operation': 'Update',
+                                              'subresource': None,
+                                              'time': datetime.datetime(2024, 5, 25, 6, 31, 6, tzinfo=tzutc())}],
+                          'name': 'test',
+                          'namespace': None,
+                          'owner_references': None,
+                          'resource_version': '39941',
+                          'self_link': None,
+                          'uid': '310dd93c-b2d7-43ba-b628-12f07124c82f'},
+             'spec': {'finalizers': ['kubernetes']},
+             'status': {'conditions': None, 'phase': 'Active'}}
+        """
+        # 定义命名空间的元数据
+        metadata = client.V1ObjectMeta(name=namespace_name)
+        # 创建命名空间的定义
+        namespace = client.V1Namespace(metadata=metadata)
+        # 调用API创建命名空间
+        response = self.api.create_namespace(namespace)
+        return response
 
     def delete_namespace(self, namespace_name):
+        """
+            删除namespace
+        :param namespace_name:
+        :return:
+            {'api_version': 'v1',
+             'code': None,
+             'details': None,
+             'kind': 'Namespace',
+             'message': None,
+             'metadata': {'_continue': None,
+                          'remaining_item_count': None,
+                          'resource_version': '40447',
+                          'self_link': None},
+             'reason': None,
+             'status': "{'phase': 'Terminating'}"}
+        """
         return self.api.delete_namespace(namespace_name)
 
     def list_nodes(self):
+        """
+            查看node
+        :return:
+            ['docker-desktop']
+        """
         nodes = self.api.list_node()
         return [node.metadata.name for node in nodes.items]
+
+    def list_namespaced_pod(self, namespace_name):
+        pods = self.api.list_namespaced_pod(namespace=namespace_name)
+        return pods
 
     def get_pod_logs(self, pod_name, namespace="default", follow=False, tail_lines=10):
         stream_method = self.api.read_namespaced_pod_log if not follow else self.api.read_namespaced_pod_log
@@ -381,6 +451,12 @@ class KubernetesManager(object):
 
 # 示例
 if __name__ == "__main__":
+    k = KubernetesManager()
+    # print(k.list_namespaces())
+    _namespace_name = "test"
+    # print(k.create_namespace(_namespace_name))
+    # print(k.delete_namespace(_namespace_name))
+    print(k.list_nodes())
     pass
     # 创建 Service
     # create_service()
