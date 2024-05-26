@@ -412,16 +412,35 @@ class KubernetesManager(object):
             print(line.decode('utf-8'))
 
     def get_all_deployment_in_namespace(self, namespace):
+        """
+            获取指定namespace下的所有deployment
+        :param namespace:
+        :return:
+            ['nginx-deployment']
+        """
         deployments = self.apps_api.list_namespaced_deployment(namespace=namespace)
-        return deployments.items
+        return [i.metadata.name for i in deployments.items]
 
     def get_deployment_by_name(self, namespace, deployment_name):
+        """
+            指定namespace和deployment名称获取deployment
+        :param namespace:
+        :param deployment_name:
+        :return:
+        """
         deployment = self.apps_api.read_namespaced_deployment(name=deployment_name, namespace=namespace)
         return deployment
 
     def get_deployment_by_label(self, namespace, label_selector):
+        """
+            指定namespace和标签获取deployment
+        :param namespace:
+        :param label_selector: app=my-app
+        :return:
+            ['nginx-deployment']
+        """
         deployments = self.apps_api.list_namespaced_deployment(namespace=namespace, label_selector=label_selector)
-        return deployments.items
+        return [i.metadata.name for i in deployments.items]
 
     def create_deplpyment(self, namespace, deployment_name, replicas, image):
         deployment_manifest = {
@@ -430,9 +449,9 @@ class KubernetesManager(object):
             "metadata": {"name": deployment_name},
             "spec": {
                 "replicas": replicas,
-                "selector": {"matchLabels": {"app": "my-app"}},
+                "selector": {"matchLabels": {"app": "my-app1"}},
                 "template": {
-                    "metadata": {"labels": {"app": "my-app"}},
+                    "metadata": {"labels": {"app": "my-app1"}},
                     "spec": {
                         "containers": [
                             {
@@ -456,7 +475,11 @@ if __name__ == "__main__":
     _namespace_name = "test"
     # print(k.create_namespace(_namespace_name))
     # print(k.delete_namespace(_namespace_name))
-    print(k.list_nodes())
+    # print(k.list_nodes())
+    # print(k.get_all_deployment_in_namespace("default"))
+    # print(k.get_deployment_by_name("default", "nginx-deployment"))
+    # print(k.get_deployment_by_label("default", "app=my-app"))
+    # print(k.create_deplpyment("default","deployment-test", 2, "nginx:latest"))
     pass
     # 创建 Service
     # create_service()
