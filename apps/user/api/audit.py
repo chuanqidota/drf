@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from common.view.login_view import LoginApiView
 from drf import settings
-from utils.es.api import ElasticSearchManager
+from utils.es.api_elasticsearch_dsl import ElasticSearchManager
 
 logger = logging.getLogger("drf")
 

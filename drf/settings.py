@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_celery_beat',
+    'django_celery_results',
     'django_filters',
     'rest_framework',
     'drf_yasg',
@@ -173,14 +174,16 @@ REDIS_HOST = config.get('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = config.get('REDIS_PORT', 6379)
 REDIS_BROKER_DB = config.get('REDIS_BROKER_DB', 1)
 
-# Broker 地址
-CELERY_BROKER_URL = f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}'  # Broker 地址
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-
 # 日期
 CELERY_TIMEZONE = TIME_ZONE  # 指定 Celery 使用的时区
 CELERY_ENABLE_UTC = True  # 确定是否启用协调世界时（UTC）作为 Celery 的默认时区
 
+# Broker 地址
+CELERY_BROKER_URL = f'redis://:{REDIS_PASSWD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}'  # Broker 地址
+# 支持数据库django-db和缓存django-cache存储任务状态及结果
+CELERY_RESULT_BACKEND = "django-db"
+# 为存储结果设置过期日期，默认1天过期。如果beat开启，Celery每天会自动清除
+CELERY_RESULT_EXPIRES = 0
 # celery内容等消息的格式设置，默认json
 CELERY_TASK_SERIALIZER = 'json'  # 任务序列化方式
 CELERY_RESULT_SERIALIZER = 'json'  # 任务执行结果序列化方式
@@ -193,9 +196,6 @@ CELERY_TASK_EAGER_PROPAGATES = True  # 确定在执行任务时，是否将任�
 CELERY_REDIRECT_STDOUTS = True  # 确定是否重定向标准输出。如果设置为 True，则 Celery Worker 的标准输出会被重定向到日志系统。
 CELERY_REDIRECT_STDOUTS_LEVEL = "INFO"  # 指定重定向的标准输出的日志级别
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False  # 确定是否 Celery Worker 应该接管根日志记录器
-
-# 为存储结果设置过期日期，默认1天过期。如果beat开启，Celery每天会自动清除。 # 设为0，存储结果永不过期
-CELERY_RESULT_EXPIRES = 3600  # 任务过期时间
 
 # 任务调度器设为DatabaseScheduler
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

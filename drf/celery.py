@@ -18,6 +18,10 @@ app.autodiscover_tasks()
 platforms.C_FORCE_ROOT = True
 
 
-@app.task(bind=True, ignore_result=True)
-def debug_task(self):
+# 配置了ignore_result忽略任务结果
+# @app.task(bind=True, ignore_result=True)
+@app.task(bind=True)
+def debug_task(self, *args, **kwargs):
     print(f'Request: {self.request!r}')
+
+    return args, kwargs
