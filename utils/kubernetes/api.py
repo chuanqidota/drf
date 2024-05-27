@@ -45,6 +45,7 @@ Batch Operations：批量操作资源，提高效率。
 YAML与JSON转换：在YAML和JSON格式间转换资源定义。
 客户端配置：简化与集群的连接配置，支持多种认证方式。
 """
+import datetime
 
 """
 core_api = client.CoreV1Api()  # namespace,pod,service,pv,pvc
@@ -395,22 +396,6 @@ class KubernetesManager(object):
         nodes = self.api.list_node()
         return [node.metadata.name for node in nodes.items]
 
-    def list_namespaced_pod(self, namespace_name):
-        pods = self.api.list_namespaced_pod(namespace=namespace_name)
-        return pods
-
-    def get_pod_logs(self, pod_name, namespace="default", follow=False, tail_lines=10):
-        stream_method = self.api.read_namespaced_pod_log if not follow else self.api.read_namespaced_pod_log
-        log_output = stream_method(
-            name=pod_name,
-            namespace=namespace,
-            follow=follow,
-            tail_lines=tail_lines
-        )
-
-        for line in log_output:
-            print(line.decode('utf-8'))
-
     def get_all_deployment_in_namespace(self, namespace):
         """
             获取指定namespace下的所有deployment
@@ -442,7 +427,15 @@ class KubernetesManager(object):
         deployments = self.apps_api.list_namespaced_deployment(namespace=namespace, label_selector=label_selector)
         return [i.metadata.name for i in deployments.items]
 
-    def create_deplpyment(self, namespace, deployment_name, replicas, image):
+    def create_deployment(self, namespace, deployment_name, replicas, image):
+        """
+            初始化创建deployment
+        :param namespace:
+        :param deployment_name:
+        :param replicas:
+        :param image:
+        :return:
+        """
         deployment_manifest = {
             "apiVersion": "apps/v1",
             "kind": "Deployment",
@@ -467,6 +460,98 @@ class KubernetesManager(object):
         deployment = self.apps_api.create_namespaced_deployment(namespace=namespace, body=deployment_manifest)
         return deployment
 
+    def delete_deployment(self, namespace, deployment_name):
+        """
+            删除deployment
+        :param namespace: 命名空间
+        :param deployment_name:
+        :return:
+            {'api_version': 'v1',
+             'code': None,
+             'details': {'causes': None,
+                         'group': 'apps',
+                         'kind': 'deployments',
+                         'name': 'deployment-test',
+                         'retry_after_seconds': None,
+                         'uid': '290f869d-2312-433e-8b5a-c1f656b66b92'},
+             'kind': 'Status',
+             'message': None,
+             'metadata': {'_continue': None,
+                          'remaining_item_count': None,
+                          'resource_version': None,
+                          'self_link': None},
+             'reason': None,
+             'status': 'Success'}
+        """
+        return self.apps_api.delete_namespaced_deployment(name=deployment_name, namespace=namespace)
+
+    def scale_deployments(self, namespace, deployment_name, replicas):
+        """
+            扩容
+        :param namespace:
+        :param deployment_name:
+        :param replicas: 数量
+        :return:
+            {'api_version': 'autoscaling/v1',
+             'kind': 'Scale',
+             'metadata': {'annotations': None,
+                          'creation_timestamp': datetime.datetime(2024, 5, 27, 12, 19, 10, tzinfo=tzutc()),
+                          'deletion_grace_period_seconds': None,
+                          'deletion_timestamp': None,
+                          'finalizers': None,
+                          'generate_name': None,
+                          'generation': None,
+                          'labels': None,
+                          'managed_fields': None,
+                          'name': 'deployment-test',
+                          'namespace': 'default',
+                          'owner_references': None,
+                          'resource_version': '51544',
+                          'self_link': None,
+                          'uid': '45768f0b-1676-4b5a-b96d-9b9b3213c162'},
+             'spec': {'replicas': 3},
+             'status': {'replicas': 2, 'selector': 'app=my-app1'}}
+        """
+        body = {"spec": {"replicas": replicas}}
+        return self.apps_api.patch_namespaced_deployment_scale(name=deployment_name, namespace=namespace, body=body)
+
+    def restart_deployment(self, namespace, deployment_name):
+        """
+            重启deployment
+            patch_namespaced_deployment这里只要更改对应的值即可
+        :param namespace:
+        :param deployment_name:
+        :return:
+        """
+        body = {
+            "spec": {
+                "template": {
+                    "metadata": {
+                        "annotations": {
+                            "kubectl.kubernetes.io/restartedAt": str(datetime.datetime.now())
+                        }
+                    }
+                }
+            }
+        }
+        # patch_namespaced_deployment
+        return self.apps_api.patch_namespaced_deployment(name=deployment_name, namespace=namespace, body=body)
+
+    def list_namespaced_pod(self, namespace_name):
+        pods = self.api.list_namespaced_pod(namespace=namespace_name)
+        return pods
+
+    def get_pod_logs(self, pod_name, namespace="default", follow=False, tail_lines=10):
+        stream_method = self.api.read_namespaced_pod_log if not follow else self.api.read_namespaced_pod_log
+        log_output = stream_method(
+            name=pod_name,
+            namespace=namespace,
+            follow=follow,
+            tail_lines=tail_lines
+        )
+        for line in log_output:
+            print(line.decode('utf-8'))
+
 
 # 示例
 if __name__ == "__main__":
@@ -479,36 +564,8 @@ if __name__ == "__main__":
     # print(k.get_all_deployment_in_namespace("default"))
     # print(k.get_deployment_by_name("default", "nginx-deployment"))
     # print(k.get_deployment_by_label("default", "app=my-app"))
-    # print(k.create_deplpyment("default","deployment-test", 2, "nginx:latest"))
+    # print(k.create_deployment("default", "deployment-test", 2, "nginx:latest"))
+    # print(k.delete_deployment("default","deployment-test"))
+    # print(k.scale_deployments("default", "deployment-test", 3))
+    print(k.restart_deployment("default", "deployment-test"))
     pass
-    # 创建 Service
-    # create_service()
-    # print("Service created.")
-    #
-    # # 列出所有 Service
-    # print("\nList of Services:")
-    # print(list_services())
-    # for svc in list_services().items:
-    #     print("- ", svc.metadata.name)
-
-    # # 删除 Service
-    # delete_service("my-service")
-    # print("\nService deleted.")
-
-    # print(create_pod())
-
-    # print(read_pod("my-pod"))
-
-    # print(update_pod("my-pod"))
-
-    # print(get_pod_status("my-pod"))
-
-    # print(delete_pod("my-pod"))
-
-    # create_deployment()
-
-    # scale_deployment("my-new-deployment",4)
-
-    # print(pause_deployment("my-new-deployment"))
-
-    # print(delete_deployment("my-new-deployment"))
