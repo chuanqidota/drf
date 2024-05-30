@@ -199,11 +199,11 @@ class SaltAPI:
                 if line:
                     event = line.decode('utf-8')
                     event_data = json.loads(event[5:]) if event.startswith('data:') else None
-                    if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/new/'):
+                    if event_data and event_data.get('tag').startswith(f'salt/job/{jid}/new'):
                         minions = event_data['data']['minions']
                     if event_data and \
-                            event_data.get('tag').startswith(f'salt/job/{jid}/ret/') and \
-                            event_data['data']['func'] == "state.sls":
+                            event_data.get('tag', {}).startswith(f'salt/job/{jid}/ret/') and \
+                            event_data.get('data', {}).get('fun') == "state.sls":
                         minion_id = event_data['data']['id']
                         completed_minions.add(minion_id)
                         success = event_data['data'].get('success', False)
