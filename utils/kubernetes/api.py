@@ -439,12 +439,19 @@ class KubernetesManager(object):
         deployment_manifest = {
             "apiVersion": "apps/v1",
             "kind": "Deployment",
-            "metadata": {"name": deployment_name},
+            "metadata": {
+                "name": deployment_name,
+                "labels": {"app": "my-app"}
+            },
             "spec": {
                 "replicas": replicas,
-                "selector": {"matchLabels": {"app": "my-app1"}},
+                "selector": {
+                    "matchLabels": {"app": "my-app1"}
+                },
                 "template": {
-                    "metadata": {"labels": {"app": "my-app1"}},
+                    "metadata": {
+                        "labels": {"app": "my-app"}
+                    },
                     "spec": {
                         "containers": [
                             {
@@ -537,11 +544,92 @@ class KubernetesManager(object):
         # patch_namespaced_deployment
         return self.apps_api.patch_namespaced_deployment(name=deployment_name, namespace=namespace, body=body)
 
-    def list_namespaced_pod(self, namespace_name):
-        pods = self.api.list_namespaced_pod(namespace=namespace_name)
-        return pods
+    def create_namespaced_service(self, namespace, body, **kwargs):
+        """
+            创建service
+        :param namespace: namespace
+        :param body: {}
+        :return:
+        """
+        return self.api.create_namespaced_service(namespace=namespace, body=body, **kwargs)
+
+    def list_namespaced_service(self, namespace, **kwargs):
+        """
+            列出service
+        :param namespace:
+        :return:
+        """
+        services = self.api.list_namespaced_service(namespace=namespace, **kwargs)
+        return [i.metadata.name for i in services.items]
+
+    def delete_namespaced_service(self, name, namespace, **kwargs):
+        """
+            删除service
+        :param name:
+        :param namespace:
+        :return:
+        """
+        return self.api.delete_namespaced_service(name=name, namespace=namespace, **kwargs)
+
+    def patch_namespaced_service(self, name, namespace, body, **kwargs):
+        """
+            修改namespace的service
+        :param name:
+        :param namespace:
+        :param body:
+        :return:
+        """
+        return self.api.patch_namespaced_service(name=name, namespace=namespace, body=body, **kwargs)
+
+    def create_namespaced_pod(self, namespace, body, **kwargs):
+        """
+            创建pod
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.create_namespaced_pod(namespace=namespace, body=body, **kwargs)
+
+    def list_namespaced_pod(self, namespace_name, **kwargs):
+        """
+            列出pod
+        :param namespace_name: namespace
+        :return:
+        """
+        pods = self.api.list_namespaced_pod(namespace=namespace_name, **kwargs)
+        return [i.metadata.name for i in pods.items]
+
+    def delete_namespaced_pod(self, name, namespace, **kwargs):
+        """
+            删除pod
+        :param name:
+        :param namespace:
+        :param kwargs:
+        :return:
+        """
+        return self.api.delete_namespaced_pod(name=name, namespace=namespace, **kwargs)
+
+    def patch_namespaced_pod(self, name, namespace, body, **kwargs):
+        """
+            修改namespace的pod
+        :param name:
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.patch_namespaced_pod(name=name, namespace=namespace, body=body, **kwargs)
 
     def get_pod_logs(self, pod_name, namespace="default", follow=False, tail_lines=10):
+        """
+            查看pod日志
+        :param pod_name:
+        :param namespace:
+        :param follow:
+        :param tail_lines:
+        :return:
+        """
         stream_method = self.api.read_namespaced_pod_log if not follow else self.api.read_namespaced_pod_log
         log_output = stream_method(
             name=pod_name,
@@ -552,6 +640,141 @@ class KubernetesManager(object):
         for line in log_output:
             print(line.decode('utf-8'))
 
+    def list_namespaced_secret(self, namespace, **kwargs):
+        """
+            查看secret
+        :param namespace:
+        :param kwargs:
+        :return:
+        """
+        return self.api.list_namespaced_secret(namespace=namespace, **kwargs)
+
+    def create_namespaced_secret(self, namespace, body, **kwargs):
+        """
+            创建secret
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.create_namespaced_secret(namespace=namespace, body=body, **kwargs)
+
+    def delete_namespaced_secret(self, name, namespace, **kwargs):
+        """
+            删除secret
+        :param name:
+        :param namespace:
+        :param kwargs:
+        :return:
+        """
+        return self.api.delete_namespaced_secret(name=name, namespace=namespace, **kwargs)
+
+    def patch_namespaced_secret(self, name, namespace, body, **kwargs):
+        """
+            修改secret
+        :param name:
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.patch_namespaced_secret(name=name, namespace=namespace, body=body, **kwargs)
+
+    def list_namespaced_config_map(self, namespace, **kwargs):
+        """
+            查看config-map
+        :param namespace:
+        :param kwargs:
+        :return:
+        """
+        return self.api.list_namespaced_config_map(namespace=namespace, **kwargs)
+
+    def create_namespaced_config_map(self, namespace, body, **kwargs):
+        """
+            创建config-Map
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.create_namespaced_config_map(namespace=namespace, body=body, **kwargs)
+
+    def delete_namespaced_config_map(self, name, namespace, **kwargs):
+        """
+            删除config-map
+        :param name:
+        :param namespace:
+        :param kwargs:
+        :return:
+        """
+        return self.api.delete_namespaced_config_map(name=name, namespace=namespace, **kwargs)
+
+    def patch_namespaced_config_map(self, name, namespace, body, **kwargs):
+        """
+            修改config-map
+        :param name:
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.patch_namespaced_config_map(name=name, namespace=namespace, body=body, **kwargs)
+
+    def list_persistent_volume(self, **kwargs):
+        """
+            列出pv
+        :param kwargs:
+        :return:
+        """
+        return self.api.list_persistent_volume(**kwargs)
+
+    def create_persistent_volume(self, body, **kwargs):
+        """
+            创建pv
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.create_persistent_volume(body=body, **kwargs)
+
+    def delete_persistent_volume(self, name, **kwargs):
+        """
+            删除pv
+        :param name:
+        :param kwargs:
+        :return:
+        """
+        return self.api.delete_persistent_volume(name=name, **kwargs)
+
+    def patch_persistent_volume(self, name, body, **kwargs):
+        """
+            修改pv
+        :param name:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.patch_persistent_volume(name=name, body=body, **kwargs)
+
+    def list_persistent_volume_claim_for_all_namespaces(self, **kwargs):
+        """
+            列出pvc
+        :param kwargs:
+        :return:
+        """
+        return self.api.list_persistent_volume_claim_for_all_namespaces(**kwargs)
+
+    def patch_namespaced_persistent_volume_claim(self, name, namespace, body, **kwargs):
+        """
+            修改pvc
+        :param name:
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.api.patch_namespaced_persistent_volume_claim(name=name, namespace=namespace, body=body, **kwargs)
+
 
 # 示例
 if __name__ == "__main__":
@@ -561,11 +784,11 @@ if __name__ == "__main__":
     # print(k.create_namespace(_namespace_name))
     # print(k.delete_namespace(_namespace_name))
     # print(k.list_nodes())
-    # print(k.get_all_deployment_in_namespace("default"))
-    # print(k.get_deployment_by_name("default", "nginx-deployment"))
-    # print(k.get_deployment_by_label("default", "app=my-app"))
-    # print(k.create_deployment("default", "deployment-test", 2, "nginx:latest"))
-    # print(k.delete_deployment("default","deployment-test"))
-    # print(k.scale_deployments("default", "deployment-test", 3))
-    print(k.restart_deployment("default", "deployment-test"))
-    pass
+    # print(k.get_all_deployment_in_namespace(_namespace_name))
+    # print(k.get_deployment_by_name(_namespace_name, "deployment-test"))
+    # print(k.get_deployment_by_label(_namespace_name, "app=my-app"))
+    # print(k.create_deployment(_namespace_name, "deployment-test", 2, "nginx:latest"))
+    # print(k.delete_deployment(_namespace_name, "deployment-test"))
+    # print(k.scale_deployments(_namespace_name, "deployment-test", 3))
+    # print(k.restart_deployment(_namespace_name, "deployment-test"))
+    # print(k.list_namespaced_pod(_namespace_name, "app=my-app1"))
