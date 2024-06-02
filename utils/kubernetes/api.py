@@ -49,7 +49,7 @@ import datetime
 
 """
 core_api = client.CoreV1Api()  # namespace,pod,service,pv,pvc
-apps_api = client.AppsV1Api()  # deployment.md
+apps_api = client.AppsV1Api()  # 创建deployment.md
 networking_api = client.NetworkingV1beta1Api()  # ingress
 storage_api = client.StorageV1Api()  # storage_class
 """
@@ -187,7 +187,7 @@ class KubernetesManager(object):
             获取指定namespace下的所有deployment
         :param namespace:
         :return:
-            ['nginx-deployment.md']
+            ['nginx-创建deployment.md']
         """
         deployments = self.apps_api.list_namespaced_deployment(namespace=namespace)
         return [i.metadata.name for i in deployments.items]
@@ -208,7 +208,7 @@ class KubernetesManager(object):
         :param namespace:
         :param label_selector: app=my-app
         :return:
-            ['nginx-deployment.md']
+            ['nginx-创建deployment.md']
         """
         deployments = self.apps_api.list_namespaced_deployment(namespace=namespace, label_selector=label_selector)
         return [i.metadata.name for i in deployments.items]
@@ -264,7 +264,7 @@ class KubernetesManager(object):
              'details': {'causes': None,
                          'group': 'apps',
                          'kind': 'deployments',
-                         'name': 'deployment.md-test',
+                         'name': '创建deployment.md-test',
                          'retry_after_seconds': None,
                          'uid': '290f869d-2312-433e-8b5a-c1f656b66b92'},
              'kind': 'Status',
@@ -296,7 +296,7 @@ class KubernetesManager(object):
                           'generation': None,
                           'labels': None,
                           'managed_fields': None,
-                          'name': 'deployment.md-test',
+                          'name': '创建deployment.md-test',
                           'namespace': 'default',
                           'owner_references': None,
                           'resource_version': '51544',
@@ -571,10 +571,10 @@ if __name__ == "__main__":
     # print(k.delete_namespace(_namespace_name))
     # print(k.list_nodes())
     # print(k.get_all_deployment_in_namespace(_namespace_name))
-    # print(k.get_deployment_by_name(_namespace_name, "deployment.md-test"))
+    # print(k.get_deployment_by_name(_namespace_name, "创建deployment.md-test"))
     # print(k.get_deployment_by_label(_namespace_name, "app=my-app"))
-    # print(k.create_deployment(_namespace_name, "deployment.md-test", 2, "nginx:latest"))
-    # print(k.delete_deployment(_namespace_name, "deployment.md-test"))
-    # print(k.scale_deployments(_namespace_name, "deployment.md-test", 3))
-    # print(k.restart_deployment(_namespace_name, "deployment.md-test"))
+    # print(k.create_deployment(_namespace_name, "创建deployment.md-test", 2, "nginx:latest"))
+    # print(k.delete_deployment(_namespace_name, "创建deployment.md-test"))
+    # print(k.scale_deployments(_namespace_name, "创建deployment.md-test", 3))
+    # print(k.restart_deployment(_namespace_name, "创建deployment.md-test"))
     # print(k.list_namespaced_pod(_namespace_name, "app=my-app1"))
