@@ -86,8 +86,6 @@ class KubernetesManager(object):
             Roles
             ClusterRoleBindings
             RoleBindings
-
-
     """
 
     def __init__(self):
@@ -560,6 +558,46 @@ class KubernetesManager(object):
         :return:
         """
         return self.api.patch_namespaced_persistent_volume_claim(name=name, namespace=namespace, body=body, **kwargs)
+
+    def list_namespaced_ingress(self, namespace, **kwargs):
+        """
+            列举指定namespace下的ingress
+        :param namespace:
+        :param kwargs:
+        :return:
+        """
+        return self.net_api.list_namespaced_ingress(namespace, **kwargs)
+
+    def create_namespaced_ingress(self, namespace, body, **kwargs):
+        """
+            创建指定namespace下的ingress.
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.net_api.create_namespaced_ingress(namespace, body, **kwargs)
+
+    def delete_namespaced_ingress(self, name, namespace, **kwargs):
+        """
+            删除指定namespace下的ingress
+        :param name:
+        :param namespace:
+        :param kwargs:
+        :return:
+        """
+        return self.net_api.delete_namespaced_ingress(name, namespace, **kwargs)
+
+    def patch_namespaced_ingress(self, name, namespace, body, **kwargs):
+        """
+            修改指定namespace下的ingress.
+        :param name:
+        :param namespace:
+        :param body:
+        :param kwargs:
+        :return:
+        """
+        return self.net_api.patch_namespaced_ingress(name, namespace, body, **kwargs)
 
 
 # 示例
