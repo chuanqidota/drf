@@ -75,7 +75,7 @@ class EtcdManager:
 
 
 if __name__ == '__main__':
-    with  EtcdManager() as etcd_manager:
+    with EtcdManager() as etcd_manager:
         etcd_manager.get_client()
         etcd_manager.set_key_value('test', 'test')
         # etcd_manager.get_key_value("test")
