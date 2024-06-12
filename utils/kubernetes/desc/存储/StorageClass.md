@@ -10,3 +10,31 @@
 * StorageClass 支持与各种外部存储系统集成，如云提供商的块存储服务（如AWS EBS、GCP PD）、NFS、Ceph等，通过不同的插件或provisioners实现。
 #### 声明式管理：
 * 通过 YAML 文件定义 StorageClass，与 Kubernetes 的声明式配置风格保持一致，便于版本控制和自动化部署。
+
+#### 属性配置
+* `provisioner`：指定负责创建 PV 的外部存储插件或系统，如 AWS EBS、GCE PD、NFS 等。
+* `parameters`：提供给 provisioner 的参数，用于定制存储卷，例如磁盘类型、IOPS 等。
+* `reclaimPolicy`：决定当 PVC 被删除时，PV 的数据应如何处理，通常是 Retain（保留数据）、Delete（删除数据
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  # StorageClass 的名称
+  name: managed-nfs-storage
+  # 可选的注解，例如设置为默认的 StorageClass
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: example.com/nfs # 这里应替换为实际的 provisioner 名称，如kubernetes.io/nfs对于NFS
+# 可选参数，传递给底层存储系统
+parameters:
+  # NFS 服务器地址
+  server: nfs.example.com
+  # 共享目录路径
+  path: "/exports/data"
+
+# reclaimPolicy 定义了 PersistentVolume 在 PVC 被删除时的行为
+reclaimPolicy: Delete
+# 可选的卷绑定模式，如动态绑定 (Dynamic) 或立即绑定 (Immediate)
+volumeBindingMode: Immediate
+```
