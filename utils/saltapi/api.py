@@ -32,6 +32,7 @@ salt -L 'hostname,hostname2' cmd.run 'df -h' # 执行多台
 
 salt-run jobs.lookup_jid 20240508035728435872 # 查询jid的结果
 
+salt-run fileserver.file_list 可以查看sls文件路径
 
 配置git
 /etc/salt/master
@@ -382,6 +383,16 @@ class SaltAPI:
         ret = res['return'][0]['data']['success']
         return ret
 
+    def get_file_list(self):
+        """
+            查看salt-sls文件列表
+        :return:
+        """
+        body = {'client': 'runner', 'fun': 'fileserver.file_list'}
+        res = self.__post(self.base_url, body)
+        res = res['return'][0]
+        return res
+
     def ping_minion(self, minion, tgt_type="glob"):
         """
         测试指定目标是否存活。
@@ -679,6 +690,7 @@ if __name__ == "__main__":
     _password = "python"
     s = SaltAPI(_base_url, _username, _password)
     _minion_id = ["localhost", "localhost1"]
+    print(s.get_file_list())
     # print(s.get_keys2())
     # print(s.get_active_keys())
     # print(s.get_deactive_keys())
@@ -695,3 +707,4 @@ if __name__ == "__main__":
     # print(s.get_running_jobs())
 
     # print(s.exec_pillar("localhost", "cmd.pillar_demo", **{"version": "aaaa"}))
+# curl -H "X-Auth-Token: e24fb9912af7c5ace21121a9ba6d5c275360926f" -s "http://10.10.0.193:8090/srv/salt/cmd/cmd_run.sls"
