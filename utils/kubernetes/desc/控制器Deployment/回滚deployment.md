@@ -53,7 +53,7 @@ kubectl rollout pause deployment nginx-deployment
 
 ### 恢复更新
 ```
-kubectl rollout pause deployment nginx-deployment
+kubectl rollout resume deployment nginx-deployment
 ```
 
 
