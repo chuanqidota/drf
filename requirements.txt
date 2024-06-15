@@ -41,3 +41,4 @@ jenkinsapi==0.3.13
 python-jenkins==1.8.2
 threadpool==1.3.2
 django-celery-results==2.5.1
+fabric==3.2.2
