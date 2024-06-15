@@ -48,7 +48,7 @@ YAML与JSON转换：在YAML和JSON格式间转换资源定义。
 import datetime
 
 """
-core_api = client.CoreV1Api()  # namespace,pod,service,pv,pvc
+core_api = client.CoreV1Api()  # namespace,Pod,service,pv,pvc
 apps_api = client.AppsV1Api()  # 创建deployment.md
 networking_api = client.NetworkingV1beta1Api()  # ingress
 storage_api = client.StorageV1Api()  # storage_class

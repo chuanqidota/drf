@@ -34,7 +34,7 @@ if __name__ == "__main__":
     apiVersion: v1
     kind: Pod
     metadata:
-      name: my-pod
+      name: my-Pod
     spec:
       containers:
       - name: my-container

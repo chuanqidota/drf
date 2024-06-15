@@ -4,7 +4,7 @@
 kubectl get secrets
 
 # 查看 Secret 的详细信息
-kubectl describe secret <secret-name>
+kubectl describe Secret <Secret-name>
 ```
 
 > TIP \

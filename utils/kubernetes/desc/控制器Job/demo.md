@@ -52,7 +52,7 @@ Pod Template:
 Events:
   FirstSeen    LastSeen    Count    From            SubobjectPath    Type        Reason            Message
   ---------    --------    -----    ----            -------------    --------    ------            -------
-  1m           1m          1        {job-controller }                Normal      SuccessfulCreate  Created pod: pi-dtn4q
+  1m           1m          1        {job-controller }                Normal      SuccessfulCreate  Created Pod: pi-dtn4q
 ```
 
 * 查看日志

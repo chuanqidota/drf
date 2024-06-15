@@ -3,7 +3,7 @@
 * 如果你有包含敏感数据的文件（如用户名和密码），可以使用以下命令创建 Secret
 
 ```yaml
-kubectl create secret generic <secret-name> \
+kubectl create Secret generic <Secret-name> \
 --from-file=./username.txt \
 --from-file=./password.txt
 ```
