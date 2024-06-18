@@ -71,7 +71,24 @@ spec:
 #### LoadBalancer
 * 特点：在云环境中，它会创建一个外部负载均衡器（如 AWS ELB、GCP Load Balancer 等），并将流量路由到 Service。
 * 使用场景：适用于需要公开、受控地从互联网访问服务的情况，通常由云提供商提供负载均衡功能。
-  
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-loadbalancer-service
+  annotations: # 可选，某些云提供商可能需要额外的注解来配置负载均衡器的特性
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb" # 例如，为AWS设置NLB类型的负载均衡器
+spec:
+  type: LoadBalancer # 指定服务类型为LoadBalancer
+  selector: # 用于选择后端Pod的标签
+    app: my-app
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80 # 服务端口，负载均衡器监听的端口
+      targetPort: 8080 # Pod端口，后端pod实际监听的端口
+```
+
 #### ExternalName
 * 特点：它将 Service 映射到一个外部 DNS 名称，不创建任何内部 IP 地址，而是返回 CNAME 记录指向指定的域名。这种方式不需要创建任何集群内部的Endpoint或Pod，而是直接利用DNS解析将服务名指向外部域名
 * 使用场景：用于将 Kubernetes 内部的请求直接转发到外部服务，不涉及集群内的 Pod。
