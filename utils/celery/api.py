@@ -1,8 +1,24 @@
 import time
 
 from celery import Celery
+from celery.schedules import crontab
 
 app = Celery('tasks', broker="redis://localhost:6379/1", backend="redis://localhost:6379/2")
+
+# 启动worker： celery -A api worker -l info
+# 启动beat:    celery -A api beat -l info
+# 注意：-A 参数 跟的是Celery 应用实例的 Python 模块路径
+
+
+# 定时任务
+app.conf.beat_schedule = {
+    'send_cmd': {
+        'task': '',  # 任务路径
+        'schedule': crontab(minute="1", hour="1"),  # 定时周期
+        'args': (),
+        'kwargs': {},
+    }
+}
 
 
 class CeleryHandler:
