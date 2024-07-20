@@ -28,11 +28,11 @@ class ConfObj:
                               '8XHTBcMv80NJhuTOnmSNqtBmnAYE8imQCF563Hp4pg==',
 
             # redis
-            'REDIS_HOST': '',
-            'REDIS_PORT': '',
+            'REDIS_HOST': '127.0.0.1',
+            'REDIS_PORT': '6379',
             'REDIS_PASSWD': '',
             'REDIS_BROKER_DB': '',
-            'REDIS_CACHE_DB': '',
+            'REDIS_CACHE_DB': '1',
 
             # es配置-配置安自身需求调整
             'ES_HOST_PORT': ['http://127.0.0.1:9200'],
