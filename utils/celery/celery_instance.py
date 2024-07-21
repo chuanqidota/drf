@@ -1,7 +1,4 @@
-import time
-
 from celery import Celery
-from celery.schedules import crontab
 
 """
 celery文档：http://www.celeryproject.org/
@@ -30,18 +27,48 @@ celery文档：http://www.celeryproject.org/
 -R 或 --autoscale: 设置自动扩展的最小和最大并发值
 """
 
+##################################
+# 声明实例
+##################################
+
 app = Celery('tasks', broker="redis://localhost:6379/1", backend="redis://localhost:6379/2")
 
-
+##################################
 # 定时任务
-# app.conf.beat_schedule = {
-#     'send_cmd': {
-#         'task': '',  # 任务路径
-#         'schedule': crontab(minute="1", hour="1"),  # 定时周期
-#         'args': (),
-#         'kwargs': {},
-#     }
-# }
+##################################
+"""
+app.conf.beat_schedule = {
+    'send_cmd': {
+        'task': '',  # 任务路径
+        'schedule': crontab(minute="1", hour="1"),  # 定时周期
+        'args': (),
+        'kwargs': {},
+    }
+}
+"""
+import time
+
+import celery
+from celery import shared_task
+
+
+##################################
+# 两种异步调用方式
+##################################
+"""
+apply_async 和 delay 参数功能一样，但是拥有更多参数功能，常用参数如下：
+
+countdown (float): 接收到任务后，执行任务之前等待的时间(s)。
+eta (~datetime.datetime): 使用 datetime 指定 Worker 接收到任务后，开始执行任务的精确时间
+expires (float, ~datetime.datetime): 使用 datetime 指定 Worker 接收到任务后的任务过期时间，过期后则不再执行。
+shadow (str): 重新指定消息代理的 connection。
+retry (bool): .在消息代理 connection 失败或断开的情况下，重试任务发送。
+retry_policy (Mapping):  任务重试发送策略。
+queue (str, kombu.Queue):  指定任务储存队列。
+priority (int): 设定队列优先级 0~9。
+link (~@Signature):如果任务执行成功，则紧接着执行一系列任务签名。
+link_error (~@Signature): 如果任务执行发生错误，则紧接着执行一系列任务签名。
+"""
 
 
 @app.task(bind=True)  # bind=True 函数可以使用self做为第一个参数。可以访问任务参数
@@ -53,6 +80,40 @@ def test_task1(self):
 
 
 # test_task1.delay()
+
+
+@shared_task(queue="test")
+def test_task2():
+    print("test_task2")
+
+
+# test_task2.apply_async()
+
+
+##################################
+# 回调
+##################################
+class MyTask(celery.Task):
+    # 任务失败时执行
+    def on_failure(self, exc, task_id, args, kwargs, info):
+        print(f'{task_id} failed: {exc}')
+
+    # 任务成功时执行
+    def on_success(self, retval, task_id, args, kwargs):
+        pass
+
+    # 任务重试时执行
+    def on_retry(self, exc, task_id, args, kwargs, einfo):
+        pass
+
+
+@shared_task(base=MyTask)
+def test_task3():
+    print("test_task3")
+    raise Exception("test_task3")
+
+
+# test_task3.delay()
 
 
 class CeleryHandler:
