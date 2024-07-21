@@ -1,5 +1,8 @@
+import time
+
 from celery import Celery
 from celery.schedules import crontab
+
 """
 celery文档：http://www.celeryproject.org/
 
@@ -27,23 +30,29 @@ celery文档：http://www.celeryproject.org/
 -R 或 --autoscale: 设置自动扩展的最小和最大并发值
 """
 
-
-
 app = Celery('tasks', broker="redis://localhost:6379/1", backend="redis://localhost:6379/2")
 
 
-
-
-
 # 定时任务
-app.conf.beat_schedule = {
-    'send_cmd': {
-        'task': '',  # 任务路径
-        'schedule': crontab(minute="1", hour="1"),  # 定时周期
-        'args': (),
-        'kwargs': {},
-    }
-}
+# app.conf.beat_schedule = {
+#     'send_cmd': {
+#         'task': '',  # 任务路径
+#         'schedule': crontab(minute="1", hour="1"),  # 定时周期
+#         'args': (),
+#         'kwargs': {},
+#     }
+# }
+
+
+@app.task(bind=True)  # bind=True 函数可以使用self做为第一个参数。可以访问任务参数
+def test_task1(self):
+    print(f"{self.request}")
+    print("dir:", dir(self))
+    time.sleep(10)
+    return
+
+
+# test_task1.delay()
 
 
 class CeleryHandler:
