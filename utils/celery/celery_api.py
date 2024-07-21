@@ -2,15 +2,37 @@ from celery import Celery
 from celery.schedules import crontab
 """
 celery文档：http://www.celeryproject.org/
+
+# 启动worker： celery -A celery_api worker --loglevel INFO -c 2 -Q duilie1 -D
+# 启动beat:    celery -A celery_api beat -l info
+
+参数
+# 常用参数
+-A 或 --app: 指定 Celery 应用程序的位置，通常是模块名称。
+-c 或 --concurrency: 设置并行处理任务的进程数量，默认为系统可用的 CPU 数量。
+-Q 或 --queues: 指定 worker 将从哪些队列读取任务。
+-l 或 --loglevel: 设置日志级别，例如 INFO, DEBUG, WARNING 等。
+-D 或 --detach: 后台运行 worker。
+-f 或 --logfile: 日志文件的路径。
+-P 或 --pool: 指定 worker 使用的池类型，如 prefork（默认）、eventlet、gevent 等。
+
+-n 或 --hostname: 设置 worker 的主机名，用于区分同一台机器上的多个 worker 实例。
+-E 或 --events: 开启事件监听，这将允许使用 Celery 的监控工具。
+-B 或 --beat: 同时启动周期性任务调度器（beat）。
+-O 或 --optimization: 设置优化选项，例如 fair 可以确保所有 worker 都能公平地获得任务。
+-S 或 --scheduler: 当与 -B 一起使用时，指定调度器类。
+-t 或 --time-limit: 设置任务的时间限制。
+-s 或 --soft-time-limit: 设置任务的软时间限制。
+-m 或 --maxtasksperchild: 设置每个子进程处理的最大任务数后，子进程将被重启。
+-R 或 --autoscale: 设置自动扩展的最小和最大并发值
 """
 
 
 
 app = Celery('tasks', broker="redis://localhost:6379/1", backend="redis://localhost:6379/2")
 
-# 启动worker： celery -A celery_api worker -l info
-# 启动beat:    celery -A celery_api beat -l info
-# 注意：-A 参数 跟的是Celery 应用实例的 Python 模块路径
+
+
 
 
 # 定时任务
