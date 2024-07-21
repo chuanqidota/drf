@@ -9,10 +9,10 @@ class S3Manager:
         S3处理上传下载文件
     """
 
-    def __init__(self, access_key_id, secret_access_key, endedpoint_url, bucket_name):
+    def __init__(self, access_key_id, secret_access_key, endpoint_url, bucket_name):
         self.access_key_id = access_key_id  # id
         self.secret_access_key = secret_access_key  # key
-        self.endpoint_url = endedpoint_url  # endpoint
+        self.endpoint_url = endpoint_url  # endpoint
         self.service_name = "s3"
         self.bucket_name = bucket_name  # 桶名字
 
