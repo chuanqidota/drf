@@ -1,12 +1,15 @@
-import time
-
 from celery import Celery
 from celery.schedules import crontab
+"""
+celery文档：http://www.celeryproject.org/
+"""
+
+
 
 app = Celery('tasks', broker="redis://localhost:6379/1", backend="redis://localhost:6379/2")
 
-# 启动worker： celery -A api worker -l info
-# 启动beat:    celery -A api beat -l info
+# 启动worker： celery -A celery_api worker -l info
+# 启动beat:    celery -A celery_api beat -l info
 # 注意：-A 参数 跟的是Celery 应用实例的 Python 模块路径
 
 

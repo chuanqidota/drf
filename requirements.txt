@@ -44,3 +44,4 @@ django-celery-results==2.5.1
 fabric==3.2.2
 schedule==1.2.2
 croniter==2.0.5
+celery==5.3.6
