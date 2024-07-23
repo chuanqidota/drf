@@ -390,7 +390,7 @@ class GitLabManager:
         """
         project = self.get_project(project_id)
         project.delete()
-    
+
     def create_project_member(self, project_id, user_id, access_level):
         """
             项目操作>创建项目成员
@@ -733,6 +733,83 @@ class GitLabManager:
         file = project.files.get(file_path=file_path, ref=branch)
         file.content = new_content
         file.save(branch=branch, commit_message=commit_message)
+
+    def list_webhook(self, project_id):
+        """
+            Webhook操作>列出指定项目的所有Webhook
+        :param project_id: 项目id
+        :return:
+        """
+        project = self.get_project(project_id)
+        return project.hooks.list()
+
+    def create_webhook(self, project_id, url, token, push_events=True, tag_push_events=True, merge_requests_events=True,
+                       enable_ssl_verification=True):
+        """
+            Webhook操作>创建新Webhook
+        :param project_id: 项目id
+        :param url: Webhook的URL
+        :param token: Webhook的Secret Token
+        :param push_events: 是否接收推送事件
+        :param tag_push_events: 是否接收标签推送事件
+        :param merge_requests_events: 是否接收合并请求事件
+        :param enable_ssl_verification: 是否启用SSL验证
+        :return:
+        """
+        project = self.get_project(project_id)
+        return project.hooks.create(
+            {
+                "url": url,
+                "token": token,
+                "push_events": push_events,
+                "tag_push_events": tag_push_events,
+                "merge_requests_events": merge_requests_events,
+                "enable_ssl_verification": enable_ssl_verification,
+            }
+        )
+
+    def delete_webhook(self, project_id, webhook_id):
+        """
+            Webhook操作>删除Webhook
+        :param project_id: 项目id
+        :param webhook_id: Webhook的id
+        :return:
+        """
+        project = self.get_project(project_id)
+        return project.hooks.delete(webhook_id)
+
+    def get_webhook(self, project_id, webhook_id):
+        """
+            Webhook操作>获取单个Webhook
+        :param project_id: 项目id
+        :param webhook_id: Webhook的id
+        :return:
+        """
+        project = self.get_project(project_id)
+        return project.hooks.get(webhook_id)
+
+    def update_webhook(self, project_id, webhook_id, url, token, push_events=True, tag_push_events=True,
+                       merge_requests_events=True):
+        """
+            Webhook操作>更新Webhook
+        :param project_id: 项目id
+        :param webhook_id: Webhook的id
+        :param url: Webhook的URL
+        :param token: Webhook的Secret Token
+        :param push_events: 是否接收推送事件
+        :param tag_push_events: 是否接收标签推送事件
+        :param merge_requests_events: 是否接收合并请求事件
+        :return:
+        """
+        project = self.get_project(project_id)
+        webhook = project.hooks.get(webhook_id)
+        webhook.url = url
+        webhook.token = token
+        webhook.push_events = push_events
+        webhook.tag_push_events = tag_push_events
+        webhook.merge_requests_events = merge_requests_events
+        webhook.save()
+        return
 
 
 if __name__ == '__main__':
