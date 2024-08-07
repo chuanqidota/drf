@@ -1,13 +1,33 @@
 import json
 
-from kafka import KafkaProducer, KafkaConsumer
+from kafka import KafkaProducer, KafkaConsumer, KafkaAdminClient
+from kafka.admin import NewTopic
 
 
 class KafkaManager:
 
-    def __int__(self, bootstrap_servers, topic):
+    def __init__(self, bootstrap_servers, topic):
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
+
+    def create_topic(self,num_partitions=1,replication_factor=1):
+        """
+            创建主题
+        :return:
+        """
+        admin_client = KafkaAdminClient(bootstrap_servers=self.bootstrap_servers)
+        new_topic = NewTopic(name=self.topic, num_partitions=num_partitions, replication_factor=replication_factor)
+        admin_client.create_topics([new_topic])
+        admin_client.close()
+
+    def list_topics(self):
+        """
+            列举出topic
+        :return:
+        """
+        admin_client = KafkaAdminClient(bootstrap_servers=self.bootstrap_servers)
+        topic_list = admin_client.list_topics()
+        return topic_list
 
     def producer(self, data):
         """
@@ -45,4 +65,6 @@ class KafkaManager:
 
 
 if __name__ == '__main__':
-    pass
+    _kafka_hosts = "localhost:9200"
+    _topic = "test-topic"
+    KafkaManager(_kafka_hosts, _topic).create_topic()
