@@ -10,7 +10,7 @@ class KafkaManager:
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
 
-    def create_topic(self,num_partitions=1,replication_factor=1):
+    def create_topic(self, num_partitions=1, replication_factor=1):
         """
             创建主题
         :return:
@@ -28,6 +28,15 @@ class KafkaManager:
         admin_client = KafkaAdminClient(bootstrap_servers=self.bootstrap_servers)
         topic_list = admin_client.list_topics()
         return topic_list
+
+    def delete_topic(self):
+        """
+            删除topic
+        :return:
+        """
+        admin_client = KafkaAdminClient(bootstrap_servers=self.bootstrap_servers)
+        admin_client.delete_topics([self.topic])
+        admin_client.close()
 
     def producer(self, data):
         """
