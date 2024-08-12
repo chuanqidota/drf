@@ -18,6 +18,139 @@ from ansible.executor.playbook_executor import PlaybookExecutor
 
 import ansible.constants as C
 
+# 基本命令
+"""
+列出所有主机
+ansible all --list-hosts # 如果配置主机的文件地址改变指定 -i 参数拿到    
+
+执行命令 ansible
+ansible <pattern> -m <module_name> -a "<module options>"
+ansible * -m service -a "name=httpd state=restarted"
+
+执行 ansible-playbook
+ansible-playbook  -l all playbook.yml
+
+列出所有模块
+ansible-doc -l
+
+查看模块说明
+ansible-doc systemd
+
+加上 -vvv 可以看到执行的过程
+-vvv
+
+执行命令 不可以执行管道符号
+ansible 192.168.127.4 -m command -a 'date'
+
+执行命令 可以执行管道符号
+ansible 192.168.127.4 -m shell -a "ifconfig eth0|grep addr"
+
+执行脚本 在主节点上写脚本可以在目标节点上直接执行
+ansible 192.168.127.2 -m script -a '/root/file1.sh'
+
+收集主机信息
+ansible all -m setup
+
+异步执行-返回一个job_id
+ansible all -B 60 -P 0 -m ping
+
+192.168.127.3 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    }, 
+    "ansible_job_id": "685351921391.24711", 
+    "changed": true, 
+    "finished": 0, 
+    "results_file": "/root/.ansible_async/685351921391.24711", 
+    "started": 1
+}
+
+查看执行结果
+ansible all -m async_status -a 'jid=685351921391.24711'
+
+192.168.127.3 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    }, 
+    "ansible_job_id": "685351921391.24711", 
+    "changed": false, 
+    "finished": 1, 
+    "ping": "pong"
+}
+
+"""
+
+# ansible-playbook
+"""
+语法检查
+ansible-playbook yaml文件路径 --syntax-check
+
+复制文件到目标机器上执行管道符
+---
+- hosts: <目标机器组>
+  become: true
+  tasks:
+    - name: 复制本地脚本到目标机
+      copy:
+        src: <本地脚本路径>
+        dest: <目标机路径>
+        mode: 0755
+      
+    - name: 在目标机上执行本地脚本
+      shell: <目标机路径/本地脚本名>
+
+
+不复制文件直接执行
+---
+- hosts: <目标机器组>
+  become: true
+  tasks:
+    - name: 在目标机上执行本地脚本(这个只是标题随便写)
+      script: <本地脚本路径>
+
+
+playbook启用异步
+---
+- hosts: all
+  tasks:
+   - shell: 
+       sleep 5 && hostname
+     async: 5           # 最大运行时间 
+     poll: 0            # 检测间隔时间，poll的缺省值为10
+                        # 我们可以将poll的值设置为0，这代表ansible将任务放到后台后，不会再管这个任务的执行状态，任其自生自灭
+     register: result   # 执行的结果给到register的变量
+
+   - debug:           # 可以打印变量名
+       var=result     # var要调试的变量名
+
+   - async_status: 
+       jid={{ result.ansible_job_id }}
+     register: job_result       # 这里是拿到 async_status的结果
+     until: job_result.finished # 未完成时是0，完成时是1
+     retries: 30
+   - debug:
+       var=job_result
+"""
+
+# ansible-vault
+"""
+# 基本加解密
+echo 12345 > data.txt
+ansible-vault encrypt data.txt # 加密
+ansible-vault view data.txt
+ansible-vault decrypt data.txt # 解密
+
+ansible-vault rekey data.txt # 重置加密密码
+
+# 使用密码文件
+echo 123456 > pass.txt
+ansible-vault encrypt --vault-id=pass.txt data.txt # 加密
+ansible-vault decrypt --vault-id=pass.txt data.txt # 解密
+ansible-vault view --vault-id=pass.txt data.txt # 查看数据
+
+"""
+
+
 # 注意： 该配置是为了避免没有第一次公钥访问写入 know_hosts 文件问题，
 C.HOST_KEY_CHECKING = False
 
