@@ -1,7 +1,7 @@
 from jenkinsapi import jenkins
 from django.conf import settings
 from xml.etree import ElementTree as ET
-
+# jenkinsapi
 
 class XmlParse:
     def __init__(self, config_xml):
