@@ -4,7 +4,7 @@
 from xml.etree import ElementTree
 
 import jenkins
-
+# python-jenkins
 
 class JenkinsManager:
     def __init__(self, url, username, password):
