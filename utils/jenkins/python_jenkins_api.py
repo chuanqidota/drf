@@ -176,9 +176,25 @@ class JenkinsManager:
             构建job
         :param job_name: job名称
         :param parameters: 参数
-        :return:
+        :return: 返回queueId
         """
         return self.jenkins.build_job(job_name, parameters)
+    
+    def get_job_id(self, job_name, queue_id):
+        """
+            通过job_name和queue_id获取job_id,使用时注意超时时间
+        :param job_name: job名称
+        :param queue_id: 构建后的queue_id
+        :return: job_id
+        """
+        builds = self.get_job_info(job_name).get("builds")
+        while True:
+            for build in builds:
+                build_info = self.jenkins.get_build_info(job_name, build.get("number"))
+                if build_info.get('queueId') == queue_id:
+                    return build_info.get("number")
+                time.sleep(1)
+
 
     def stop_build(self, job_name, number):
         """
@@ -278,6 +294,7 @@ class JenkinsManager:
         updated_config_xml = ElementTree.tostring(xml_root, encoding="unicode", xml_declaration=True)
         return updated_config_xml
 
+    
 
 if __name__ == "__main__":
     # 示例用法
