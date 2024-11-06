@@ -195,6 +195,21 @@ class JenkinsManager:
                     return build_info.get("number")
                 time.sleep(1)
 
+    def wait_exec_status(self, job_name, job_id):
+        """
+            等待执行的状态
+        :param job_name: job名称
+        :param job_id: job_id
+        :return:
+        """
+        flag = False
+        while True:
+            result = self.jenkins.get_build_info(job_name, job_id)
+            if not result.get("building"):
+                flag = True
+                break
+        return flag
+
 
     def stop_build(self, job_name, number):
         """
