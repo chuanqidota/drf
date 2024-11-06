@@ -211,6 +211,32 @@ class JenkinsManager:
         return flag
 
 
+    def wait_job_over(self, job_name, parameters=None):
+        """
+            执行job并等待job完成
+        :param job_name: job名称
+        :param parameters: 参数
+        :return: bool
+        """
+        next_build_number = self.jenkins.get_job_info(job_name)["nextBuildNumber"]
+        self.jenkins.build_job(job_name, parameters)
+        start_time = time.time()
+        flag = False
+        while True:
+            time.sleep(3)
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+            if elapsed_time > int(self.timeout):
+                break
+            try:
+                build_info = self.jenkins.get_build_info(job_name, next_build_number)
+                if not build_info.get("building"):
+                    flag = True
+                    break
+            except jenkins.JenkinsException:
+                continue
+        return flag
+
     def stop_build(self, job_name, number):
         """
             停止构建
