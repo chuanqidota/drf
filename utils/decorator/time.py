@@ -31,8 +31,6 @@ def time_decorator(desc=None):
                 log_format = (f"\n**********耗时检测*********\n"
                               f"函数名称:{func.__name__}\n"
                               f"函数描述:{desc if desc else func.__name__}\n"
-                              f"开始时间:{datetime.datetime.now().strftime('%Y-%m-%d %X')}\n"
-                              f"结束时间:{datetime.datetime.now().strftime('%Y-%m-%d %X')}\n"
                               f"函数耗时:{cos_time}\n"
                               f"****************************\n")
                 logger.info(log_format)
