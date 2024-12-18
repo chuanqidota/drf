@@ -1,5 +1,6 @@
 import traceback
 from io import BytesIO
+import mimetypes
 
 import boto3
 
@@ -70,19 +71,21 @@ class S3Manager:
             print(traceback.format_exc(), repr(e))
             return False
 
-    def upload_file_buffer(self, key, file):
+    def upload_file_buffer(self,file_path,key=None):
         """
             流文件上传
             这里一定要特别注意
         :param key: key
-        :param file: 文件
+        :param file_path: 文件路径
         :return: 对象key
         """
         try:
-            data_stream = BytesIO(file.read())
-            # 上传流文件到S3存储桶
-            self.client.upload_fileobj(data_stream, self.bucket_name, key)
-            return True
+            content_type, _ = mimetypes.guess_type(file_path)
+            with open(file_path, "r") as f:
+                data_stream = BytesIO(f.read())
+                # 上传流文件到S3存储桶
+                self.client.upload_fileobj(data_stream, self.bucket_name, key, ExtraArgs={'ContentType': content_type})
+                return True
         except Exception as e:
             print(traceback.format_exc(), repr(e))
             return False
