@@ -38,6 +38,8 @@ class S3Manager:
         :return: 对象key
         """
         try:
+            if not key:
+                key = os.path.basename(file_path)
             self.client.upload_file(file_path, self.bucket_name, key)
             return True
         except Exception as e:
@@ -80,6 +82,8 @@ class S3Manager:
         :return: 对象key
         """
         try:
+            if not key:
+                key = os.path.basename(file_path)
             content_type, _ = mimetypes.guess_type(file_path)
             with open(file_path, "r") as f:
                 data_stream = BytesIO(f.read())
