@@ -7,8 +7,23 @@ import jenkins
 # python-jenkins
 
 class JenkinsManager:
-    def __init__(self, url, username, password):
-        self.jenkins = jenkins.Jenkins(url, username=username, password=password)
+    def __init__(self, url, username, password=None, token=None):
+        self.url = url
+        self.username = username
+        self.password = password
+        self.token = token
+        # self.jenkins = self.__get_jenkins_client1()
+        self.jenkins = self.__get_jenkins_client2()
+    
+    def __get_jenkins_client1(self):
+        credentials = f'{self.username}:{self.token}'
+        encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+        os.environ["JENKINS_API_EXTRA_HEADERS"] = f"Authorization: Basic {encoded_credentials}"
+        return jenkins.Jenkins(self.url)
+    
+    def __get_jenkins_client2(self):
+        return jenkins.Jenkins(url, username=username, password=password)
+        
 
     def create_view(self, view_name, xml=jenkins.EMPTY_VIEW_CONFIG_XML):
         """
