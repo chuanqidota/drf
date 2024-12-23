@@ -30,7 +30,7 @@ class S3Manager:
 
         return client
 
-    def upload_file(self, key, file_path):
+    def upload_file(self, file_path, key=None):
         """
             本地文件上传
         :param key: key
