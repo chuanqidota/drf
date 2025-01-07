@@ -1,6 +1,7 @@
 import gitlab
 
 # https://python-gitlab.readthedocs.io/en/stable/index.html
+# gitlab接口文档 https://docs.gitlab.com/ee/api/rest/
 
 """
 认证与连接
