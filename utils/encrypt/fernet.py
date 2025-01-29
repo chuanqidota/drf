@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.padding import OAEP, MGF1
 from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 from cryptography.hazmat.primitives.hashes import SHA256
+import os
 
 
 class Signer:
@@ -26,6 +27,13 @@ class Signer:
             生成一个随机字符串
         """
         return Fernet.generate_key().decode("utf-8")
+
+    @staticmethod
+    def generate_key():
+        """
+            生成随机key
+        """
+        return base64.urlsafe_b64encode(os.urandom(32))
 
     def encrypt(self, dat):
         """
