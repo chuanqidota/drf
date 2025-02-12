@@ -3,7 +3,7 @@ import logging
 def get_logger():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
-    formatter = logging.Formatter("%(asctime)s %(levelname)s  %(message)s")
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(pathname)s:%(lineno)d %(message)s")
 
     stream_handler = logging.StreamHandler()  # 处理标准输出流
     stream_handler.setFormatter(formatter)
