@@ -2,6 +2,7 @@ import gitlab
 
 # https://python-gitlab.readthedocs.io/en/stable/index.html
 # gitlab接口文档 https://docs.gitlab.com/ee/api/rest/
+# https://python-gitlab.readthedocs.io/en/stable/ python-gitlab的使用文档
 
 """
 认证与连接
