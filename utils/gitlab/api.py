@@ -93,7 +93,7 @@ class GitLabManager:
         :param obj:
         :return:
         """
-        return {attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}
+        return obj.attributes
 
     def create_group(self, name, path, description=None):
         """
