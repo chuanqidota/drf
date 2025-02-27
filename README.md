@@ -63,34 +63,6 @@ This template also includes integrations with various DevOps tools and systems:
 - Docker (optional, for containerization)
 - Gunicorn (for production deployment)
 
-## Installation
-
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/yourusername/devops-template.git
-    ```
-
-2. Navigate into the project directory:
-    ```bash
-    cd devops-template
-    ```
-
-3. Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4. Configure environment variables (refer to `.env.example` for required variables).
-
-5. Run migrations:
-    ```bash
-    python manage.py migrate
-    ```
-
-6. Start the development server:
-    ```bash
-    python manage.py runserver
-    ```
 
 ## Usage
 
