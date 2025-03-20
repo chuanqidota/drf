@@ -156,7 +156,8 @@ class SaltAPI:
             'tgt': tgt,
             'fun': fun,
             'arg': arg,
-            'tgt_type': tgt_type
+            'tgt_type': tgt_type,
+            'kwarg': {'queue': True, 'concurrent': True}  # queue=True：任务按顺序执行，适合避免冲突。concurrent=True：任务并发执行，适合加快速度。
         }
         res = self.__post(self.base_url, body)
         return res
@@ -178,7 +179,8 @@ class SaltAPI:
             'tgt': tgt,
             'fun': fun,
             'arg': arg,
-            'tgt_type': tgt_type
+            'tgt_type': tgt_type,
+            'kwarg': {'queue': True, 'concurrent': True}
         }
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
@@ -413,7 +415,8 @@ class SaltAPI:
         :param tgt_type: 如果为list minion为列表 为批量
         :return:
         """
-        body = {'client': 'local', 'tgt': minion, 'fun': 'cmd.run', 'arg': cmd, 'tgt_type': tgt_type}
+        body = {'client': 'local', 'tgt': minion, 'fun': 'cmd.run', 'arg': cmd, 'tgt_type': tgt_type,
+                'kwarg': {'queue': True, 'concurrent': True}}
         res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
@@ -434,7 +437,8 @@ class SaltAPI:
                     :return: 返回执行州（state）管理操作的结果。结果是一个字典，包含执行详情和结果。
         :param tgt_type: tgt_type 如果为list minion为列表 为批量
         """
-        body = {'client': 'local', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type}
+        body = {'client': 'local', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type,
+                'kwarg': {'queue': True, 'concurrent': True}}
         res = self.__post(self.base_url, body)
         ret = res['return'][0]
         return ret
@@ -447,7 +451,8 @@ class SaltAPI:
         :param tgt_type: tgt_type 如果为list minion为列表 为批量
         :return:
         """
-        body = {'client': 'local_async', 'tgt': minion, 'fun': "cmd.run", 'arg': cmd, 'tgt_type': tgt_type}
+        body = {'client': 'local_async', 'tgt': minion, 'fun': "cmd.run", 'arg': cmd, 'tgt_type': tgt_type,
+                'kwarg': {'queue': True, 'concurrent': True}}
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
         return jid
@@ -460,7 +465,8 @@ class SaltAPI:
         :param tgt_type: tgt_type 如果为list minion为列表 为批量
         :return:
         """
-        body = {'client': 'local_async', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type}
+        body = {'client': 'local_async', 'tgt': minion, 'fun': 'state.sls', 'arg': arg, 'tgt_type': tgt_type,
+                'kwarg': {'queue': True, 'concurrent': True}}
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
         return jid
@@ -473,6 +479,18 @@ class SaltAPI:
         :param tgt_type:
         :param kwargs: pillar相关参数 字典
         :return:
+            sls文件demo
+            {% set app_name = salt['pillar.get']('app_name') %}
+            {% set app_version = salt['pillar.get']('app_version') %}
+            {% set pkg_path = salt['pillar.get']('pkg_path') %}
+            {% set branch = salt['pillar.get']('branch') %}
+            
+            run_my_script:
+              cmd.script:
+                - source: salt://shell/inte/demo.sh
+                - args: "{{ app_name }} {{ app_version }} {{ pkg_path }} {{ branch }}"
+                - runas: op
+            
         """
         body = {
             'client': 'local',
@@ -480,7 +498,7 @@ class SaltAPI:
             'fun': 'state.sls',
             'arg': arg,
             'tgt_type': tgt_type,
-            'kwarg': {'pillar': kwargs},
+            'kwarg': {'pillar': kwargs, 'queue': True, 'concurrent': True},
         }
         res = self.__post(self.base_url, body)
         ret = res['return'][0]
@@ -501,7 +519,7 @@ class SaltAPI:
             'fun': 'state.sls',
             'arg': arg,
             'tgt_type': tgt_type,
-            'kwarg': {'pillar': kwargs},
+            'kwarg': {'pillar': kwargs,'queue': True, 'concurrent': True},
         }
         res = self.__post(self.base_url, body)
         jid = res['return'][0]['jid']
