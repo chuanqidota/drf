@@ -185,8 +185,8 @@ CELERY_RESULT_BACKEND = "django-db"
 # 为存储结果设置过期日期，默认1天过期。如果beat开启，Celery每天会自动清除
 CELERY_RESULT_EXPIRES = 0
 # celery内容等消息的格式设置，默认json
-CELERY_TASK_SERIALIZER = 'json'  # 任务序列化方式
-CELERY_RESULT_SERIALIZER = 'json'  # 任务执行结果序列化方式
+CELERY_TASK_SERIALIZER = 'pickle'  # 任务序列化方式
+CELERY_RESULT_SERIALIZER = 'pickle'  # 任务执行结果序列化方式
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # 指定任务接受的内容类型(序列化)
 
 # 日志
