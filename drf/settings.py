@@ -213,6 +213,60 @@ CACHES = {
         }
     }
 }
+#################################################
+# redis-哨兵模式
+#################################################
+
+"""
+CELERY_ACCEPT_CONTENT = ["json", "pickle"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Shanghai"
+
+# Redis哨兵
+REDIS_SENTINELS = [
+    ("{ip}", "{port这里是数字}"),
+    ("{ip}", "{port这里是数字}"),
+    ("{ip}", "{port这里是数字}"),
+]
+REDIS_MASTER_NAME = "{myster_name}"
+REDIS_PASSWORD = "{password}"
+REDIS_DB = 1
+KEY_PREFIX = "pyflowable"
+CELERY_BROKER_URL = ";".join([f"sentinel://:{REDIS_PASSWORD}@{i[0]}:{i[1]}/{REDIS_DB}" for i in REDIS_SENTINELS])
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "sentinels": REDIS_SENTINELS,
+    "master_name": REDIS_MASTER_NAME,
+    "password": REDIS_PASSWORD,
+    "db": REDIS_DB,
+}
+
+CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {
+    "sentinels": REDIS_SENTINELS,
+    "master_name": REDIS_MASTER_NAME,
+    "password": REDIS_PASSWORD,
+    "db": REDIS_DB,
+}
+
+# 哨兵模式的缓存
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{REDIS_MASTER_NAME}/{REDIS_DB}",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.SentinelClient",
+            "CONNECTION_FACTORY": "django_redis.pool.SentinelConnectionFactory",
+            "SENTINELS": REDIS_SENTINELS,
+            "MASTER_NAME": REDIS_MASTER_NAME,
+            "PASSWORD":REDIS_PASSWORD,
+        },
+        "KEY_PREFIX": "{前缀}",
+        "TIMEOUT": 3000,
+    }
+}
+"""
 
 #################################################
 # rest-framework
