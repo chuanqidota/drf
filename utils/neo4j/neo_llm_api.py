@@ -32,7 +32,7 @@ chain = GraphCypherQAChain.from_llm(
 )
 
 response = chain.invoke({
-    "query": "找出关系最深的一层"
+    "query": "找出node最多的label"
 })
 
 print(response)
