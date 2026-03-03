@@ -36,3 +36,13 @@ response = chain.invoke({
 })
 
 print(response)
+
+"""
+"model": "deepseek-chat"
+"open_ai_api_key": "sk-476a55958ad94412bd3d602782e7ef24"
+"open_ai_api_base": "https://api.deepseek.com/v1"
+
+"feishu_bot_name": "影魔"
+"feishu_app_id": "cli_a90efe7b66399cd5"
+"feishu_app_secret": "csHP40BHHLCyVXBkysAD7cTvwSVdgJC3"
+"""
