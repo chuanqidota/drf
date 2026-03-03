@@ -3,6 +3,11 @@
 # deepseek的api-key
 # https://platform.deepseek.com/usage
 
+# 采集器
+# https://llm-graph-builder.neo4jlabs.com/
+
+
+
 from langchain_openai import ChatOpenAI
 from langchain_community.graphs import Neo4jGraph
 from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
