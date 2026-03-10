@@ -14,7 +14,7 @@ from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
 
 uri = "neo4j+s://0143b13f.databases.neo4j.io"
 user = "neo4j"
-password = "PiZUB3SIcbPB5s3ok5AU9mMn6QWHfVzOlkD2d-pyu4Q"
+password = ""
 
 graph = Neo4jGraph(
     url=uri,
@@ -24,7 +24,7 @@ graph = Neo4jGraph(
 
 llm = ChatOpenAI(
     model="deepseek-chat",
-    api_key="sk-476a55958ad94412bd3d602782e7ef24",
+    api_key="",
     base_url="https://api.deepseek.com/v1",
     temperature=0
 )
@@ -44,10 +44,10 @@ print(response)
 
 """
 "model": "deepseek-chat"
-"open_ai_api_key": "sk-476a55958ad94412bd3d602782e7ef24"
+"open_ai_api_key": ""
 "open_ai_api_base": "https://api.deepseek.com/v1"
 
 "feishu_bot_name": "影魔"
-"feishu_app_id": "cli_a90efe7b66399cd5"
-"feishu_app_secret": "csHP40BHHLCyVXBkysAD7cTvwSVdgJC3"
+"feishu_app_id": ""
+"feishu_app_secret": ""
 """
